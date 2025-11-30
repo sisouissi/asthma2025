@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { useNavigation } from '../../../contexts/NavigationContext';
 import { usePatientData } from '../../../contexts/PatientDataContext';

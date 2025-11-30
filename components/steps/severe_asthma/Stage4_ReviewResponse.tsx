@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigation } from '../../../contexts/NavigationContext';
 import { usePatientData } from '../../../contexts/PatientDataContext';
@@ -62,11 +61,9 @@ const Stage4_ReviewResponse: React.FC = () => {
         });
         
         if (newStatus === 'confirmed_severe') {
-            // If we came from Stage 5 (treating factors) and failed, go to Stage 6 (Phenotype)
             if (status === 'addressing_factors') {
                 navigateTo('SEVERE_ASTHMA_STAGE_6');
             } else {
-                // Otherwise, go to Stage 5 (Specialist Assessment)
                 navigateTo('SEVERE_ASTHMA_STAGE_5');
             }
         } else {
