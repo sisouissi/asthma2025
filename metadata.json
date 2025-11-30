@@ -1,0 +1,6 @@
+{
+  "name": "Application de suivi des patients asthmatiques selon GINA 2025. Version Définitive",
+  "description": "An interactive guide for asthma management based on GINA 2025 recommendations.",
+  "requestFramePermissions": [],
+  "prompt": ""
+}
