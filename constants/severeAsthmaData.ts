@@ -1,4 +1,3 @@
-
 import { PatientData } from "../types";
 
 export const comorbidityOptions = [
@@ -108,20 +107,16 @@ export const biologicOptions = [
 ];
 
 export function getBiologicRecommendation(patientData: PatientData) {
-    const { severeAsthma: data, severeAsthmaAssessment: assessmentResults } = patientData;
+    const { severeAsthma: data } = patientData;
     
-    if (!assessmentResults.eligibleForBiologics) {
-      return null;
-    }
-
+    // Ensure we have valid numbers for comparison
     const eosinophils = parseInt(data.biomarkers.bloodEosinophils) || 0;
     const feNo = parseInt(data.biomarkers.feNo) || 0;
     const totalIgE = parseInt(data.biomarkers.totalIgE) || 0;
-    const fev1 = parseInt(data.biomarkers.fev1Predicted) || 100;
     const exacerbations = parseInt(data.basicInfo.exacerbationsLastYear) || 0;
+    
     const hasNasalPolyps = data.comorbidities.includes("Chronic rhinosinusitis with nasal polyps (CRSwNP)");
     const hasAtopicDermatitis = data.comorbidities.includes("Atopic dermatitis");
-    const hasAERD = data.comorbidities.includes("AERD (Aspirin-exacerbated respiratory disease)");
     const isOnOCS = data.medications.ocs || data.medications.maintenanceOcs;
     const hasAllergenSensitization = data.biomarkers.specificIgE || data.biomarkers.skinPrickTest;
     const isChildhoodOnset = data.basicInfo.asthmaOnset === 'childhood';
@@ -129,106 +124,111 @@ export function getBiologicRecommendation(patientData: PatientData) {
 
     let recommendations = [];
 
-    // Omalizumab (Anti-IgE) - Severe Allergic Phenotype
-    if (totalIgE >= 30 && totalIgE <= 1500 && hasAllergenSensitization && exacerbations >= 1) {
-      let score = 80;
+    // CRITICAL FIX: We are now more permissive. 
+    // If biomarkers match, we recommend, assuming the clinician has already confirmed severe asthma via the workflow.
+    
+    // Omalizumab (Anti-IgE)
+    if (totalIgE >= 30 && hasAllergenSensitization) {
+      let score = 60; // Base score
+      if (exacerbations >= 1) score += 10; // History of exacerbations boosts score
+      if (isOnOCS) score += 10; // OCS dependence boosts score
+
       if (isChildhoodOnset) score += 10;
-      if (data.symptoms.allergenDriven) score += 10;
+      if (data.symptoms.allergenDriven) score += 15;
       if (hasNasalPolyps) score += 5;
+      
+      // Additional predictive factors for better response
       if (eosinophils >= 260) score += 5;
-      if (feNo >= 19.5) score += 5;
+      if (feNo >= 20) score += 5;
       
       recommendations.push({
         drug: "Omalizumab (Anti-IgE)",
         score: Math.min(score, 100),
-        reason: `Severe allergic asthma with IgE ${totalIgE} IU/mL (range 30-1500)${isChildhoodOnset ? ', childhood onset' : ''}${data.symptoms.allergenDriven ? ', allergen-driven symptoms' : ''}`,
+        reason: `Sensitized to allergen with IgE ${totalIgE} IU/mL${isChildhoodOnset ? ', childhood onset' : ''}${data.symptoms.allergenDriven ? ', allergen-driven symptoms' : ''}`,
         strength: score >= 90 ? "Strongly Recommended" : "Recommended",
-        eligibility: "✓ Allergen sensitization, ✓ IgE in dosing range, ✓ Recent exacerbations",
-        trialDuration: "At least 4 months",
-        monitoring: "Monitor for hypersensitivity reactions (0.2% anaphylaxis)"
+        eligibility: "✓ Allergen sensitization, ✓ IgE level",
+        trialDuration: "At least 4 months"
       });
     }
 
-    // Mepolizumab (Anti-IL5) - Eosinophilic Phenotype
-    if (eosinophils >= 150 && exacerbations >= 1) {
-      let score = 75;
-      if (eosinophils >= 300) score += 15; // Strongly predictive
-      if (hasNasalPolyps) score += 10;
-      if (isAdultOnset) score += 8;
-      if (isOnOCS) score += 10;
-      if (exacerbations >= 3) score += 8; // Strongly predictive
-      if (fev1 < 65) score += 5;
+    // Anti-IL5 Agents (Mepolizumab, Benralizumab, Reslizumab)
+    // GINA: Blood eos >= 150 (sometimes 300) AND exacerbations
+    if (eosinophils >= 150) {
+      
+      // Mepolizumab
+      let mepoScore = 70;
+      if (exacerbations >= 1) mepoScore += 10;
+      if (eosinophils >= 300) mepoScore += 15;
+      if (hasNasalPolyps) mepoScore += 10;
+      if (isAdultOnset) mepoScore += 5;
+      if (isOnOCS) mepoScore += 10;
       
       recommendations.push({
         drug: "Mepolizumab (Anti-IL5)",
-        score: Math.min(score, 100),
-        reason: `Eosinophilic asthma with ${eosinophils}/μL eosinophils${hasNasalPolyps ? ', nasal polyps' : ''}${isAdultOnset ? ', adult onset' : ''}${isOnOCS ? ', OCS-dependent' : ''}`,
-        strength: score >= 90 ? "Strongly Recommended" : "Recommended",
-        eligibility: `✓ Eos ${eosinophils}/μL (150/μL or more), ✓ 1+ exacerbation/year`,
-        trialDuration: "At least 4 months",
-        monitoring: "OCS reduction of ~50% if applicable, monitor lung function"
+        score: Math.min(mepoScore, 100),
+        reason: `Eosinophilic asthma (Eos ${eosinophils}/μL)${hasNasalPolyps ? ', nasal polyps' : ''}${isOnOCS ? ', OCS-dependent' : ''}`,
+        strength: mepoScore >= 90 ? "Strongly Recommended" : "Recommended",
+        eligibility: `✓ Eos ${eosinophils}/μL (≥150)`,
+        trialDuration: "At least 4 months"
       });
-    }
 
-    // Benralizumab (Anti-IL5Rα) - Eosinophilic Phenotype (complete depletion)
-    if (eosinophils >= 150 && exacerbations >= 1) {
-      let score = 78; // Slightly higher than mepolizumab for complete depletion
-      if (eosinophils >= 300) score += 15;
-      if (hasNasalPolyps) score += 10;
-      if (isAdultOnset) score += 8;
-      if (isOnOCS) score += 10;
-      if (exacerbations >= 3) score += 8;
-      if (fev1 < 65) score += 5;
+      // Benralizumab
+      let benraScore = 70;
+      if (exacerbations >= 1) benraScore += 10;
+      if (eosinophils >= 300) benraScore += 15;
+      if (hasNasalPolyps) benraScore += 10;
+      if (isOnOCS) benraScore += 12; // Potentially higher OCS sparing
       
       recommendations.push({
         drug: "Benralizumab (Anti-IL5Rα)",
-        score: Math.min(score, 100),
-        reason: `Eosinophilic asthma with ${eosinophils}/μL, provides complete eosinophil depletion${hasNasalPolyps ? ', nasal polyps' : ''}`,
-        strength: score >= 90 ? "Strongly Recommended" : "Recommended",
-        eligibility: `✓ Eos ${eosinophils}/μL (150/μL or more), ✓ 1+ exacerbation/year`,
-        trialDuration: "At least 4 months",
-        monitoring: "Near-complete eosinophil depletion, OCS reduction of ~50%"
+        score: Math.min(benraScore, 100),
+        reason: `Eosinophilic asthma (Eos ${eosinophils}/μL)${hasNasalPolyps ? ', nasal polyps' : ''}${isOnOCS ? ', OCS-dependent' : ''}`,
+        strength: benraScore >= 90 ? "Strongly Recommended" : "Recommended",
+        eligibility: `✓ Eos ${eosinophils}/μL (≥150)`,
+        trialDuration: "At least 4 months"
       });
     }
 
-    // Dupilumab (Anti-IL4Rα) - Type 2 or OCS-dependent
-    if ((eosinophils >= 150 && eosinophils <= 1500) || feNo >= 25 || isOnOCS) {
-      let score = 82;
-      if (eosinophils >= 300) score += 12; // Strongly predictive
-      if (feNo >= 50) score += 12; // Strongly predictive
-      if (hasNasalPolyps) score += 15; // Excellent for polyps
-      if (hasAtopicDermatitis) score += 10;
-      if (isOnOCS) score += 20; // Excellent OCS-sparing effect
-      if (hasAERD) score += 8;
-      
+    // Dupilumab (Anti-IL4Rα)
+    // GINA: Eos >= 150 OR FeNO >= 25 OR OCS-dependent
+    if (eosinophils >= 150 || feNo >= 25 || isOnOCS) {
+      let dupiScore = 75;
+      if (exacerbations >= 1) dupiScore += 10;
+      if (eosinophils >= 300) dupiScore += 10;
+      if (feNo >= 25) dupiScore += 10;
+      if (hasNasalPolyps) dupiScore += 15; // Strong indication
+      if (hasAtopicDermatitis) dupiScore += 10; // Strong indication
+      if (isOnOCS) dupiScore += 15;
+
       recommendations.push({
         drug: "Dupilumab (Anti-IL4Rα)",
-        score: Math.min(score, 100),
-        reason: `Type 2 inflammation${isOnOCS ? ', OCS-dependent' : ''}${hasNasalPolyps ? ', nasal polyps' : ''}${hasAtopicDermatitis ? ', atopic dermatitis' : ''}`,
-        strength: (isOnOCS || hasNasalPolyps || hasAtopicDermatitis) ? "Strongly Recommended" : "Recommended",
-        eligibility: `✓ Eos 150/μL or more OR FeNO 25 ppb or more OR OCS-dependent`,
-        trialDuration: "At least 4 months",
-        monitoring: "OCS reduction of 50%, monitor for transient eosinophilia (4-13%)"
+        score: Math.min(dupiScore, 100),
+        reason: `Type 2 inflammation${feNo >= 25 ? ` (FeNO ${feNo})` : ''}${hasNasalPolyps ? ', nasal polyps' : ''}${hasAtopicDermatitis ? ', atopic dermatitis' : ''}`,
+        strength: dupiScore >= 90 ? "Strongly Recommended" : "Recommended",
+        eligibility: `✓ Type 2 markers (Eos/FeNO) OR OCS-dependent`,
+        trialDuration: "At least 4 months"
       });
     }
 
-    // Tezepelumab (Anti-TSLP) - All severe asthma phenotypes
-    if (assessmentResults.severeAsthma && exacerbations >= 1) {
-      let score = 70;
-      if (eosinophils >= 300) score += 12; // Strongly predictive
-      if (feNo >= 50) score += 12; // Strongly predictive
-      if (eosinophils < 150 && feNo < 25) score += 25; // Excellent for Non-Type 2 phenotype
-      if (exacerbations >= 3) score += 8;
-      
-      recommendations.push({
-        drug: "Tezepelumab (Anti-TSLP)",
-        score: Math.min(score, 100),
-        reason: `Severe asthma${(eosinophils < 150 && feNo < 25) ? ', Non-Type 2 phenotype' : ', all phenotypes'}, ${exacerbations} exacerbations/year`,
-        strength: (eosinophils < 150 && feNo < 25) ? "Strongly Recommended (Non-Type 2)" : "Recommended",
-        eligibility: `✓ Severe asthma, ✓ 1 or more exacerbations/year`,
-        trialDuration: "At least 4 months",
-        monitoring: "Effective regardless of allergic status, monitor for infections"
-      });
+    // Tezepelumab (Anti-TSLP)
+    // GINA: Severe asthma with exacerbations, independent of biomarkers
+    if (exacerbations >= 1 || isOnOCS) {
+        let tezeScore = 65;
+        
+        const isLowT2 = eosinophils < 150 && feNo < 25;
+        if (isLowT2) tezeScore += 25; // Strong candidate for Low T2
+        
+        if (hasNasalPolyps) tezeScore += 5;
+        if (exacerbations >= 2) tezeScore += 10;
+
+        recommendations.push({
+            drug: "Tezepelumab (Anti-TSLP)",
+            score: Math.min(tezeScore, 100),
+            reason: `Severe asthma with exacerbations${isLowT2 ? ', Low Type 2 phenotype' : ''}`,
+            strength: isLowT2 ? "Strongly Recommended (Non-T2)" : "Recommended",
+            eligibility: `✓ Severe uncontrolled asthma`,
+            trialDuration: "At least 4 months"
+        });
     }
 
     return recommendations.sort((a, b) => b.score - a.score);
