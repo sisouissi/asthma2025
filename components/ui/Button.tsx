@@ -1,4 +1,3 @@
-
 import React, { ButtonHTMLAttributes } from 'react';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -21,45 +20,46 @@ const Button: React.FC<ButtonProps> = ({
   justify = 'center',
   ...props
 }) => {
-  const baseStyles = "font-semibold rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 inline-flex items-center disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg transform hover:-translate-y-px active:translate-y-0";
+  // Modern button base: rounded-xl, font-medium, smooth transitions, subtle active state
+  const baseStyles = "font-medium rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 inline-flex items-center disabled:opacity-50 disabled:cursor-not-allowed active:scale-95";
   
   let variantStyles = '';
   switch (variant) {
-    case 'primary':
-      variantStyles = 'bg-indigo-600 hover:bg-indigo-700 text-white focus:ring-indigo-500';
+    case 'primary': // Indigo
+      variantStyles = 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-200 focus:ring-indigo-500 border border-transparent';
       break;
-    case 'secondary':
-      variantStyles = 'bg-slate-200 hover:bg-slate-300 text-slate-800 focus:ring-slate-400 shadow-sm';
+    case 'secondary': // Slate/White
+      variantStyles = 'bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 shadow-sm focus:ring-slate-200';
       break;
-    case 'danger':
-      variantStyles = 'bg-red-600 hover:bg-red-700 text-white focus:ring-red-500';
+    case 'danger': // Red
+      variantStyles = 'bg-red-600 hover:bg-red-700 text-white shadow-md shadow-red-200 focus:ring-red-500 border border-transparent';
       break;
-    case 'warning':
-      variantStyles = 'bg-amber-500 hover:bg-amber-600 text-white focus:ring-amber-400';
+    case 'warning': // Amber
+      variantStyles = 'bg-amber-500 hover:bg-amber-600 text-white shadow-md shadow-amber-200 focus:ring-amber-400 border border-transparent';
       break;
-    case 'success':
-      variantStyles = 'bg-emerald-500 hover:bg-emerald-600 text-white focus:ring-emerald-400';
+    case 'success': // Emerald
+      variantStyles = 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-200 focus:ring-emerald-500 border border-transparent';
       break;
-    case 'info':
-      variantStyles = 'bg-cyan-500 hover:bg-cyan-600 text-white focus:ring-cyan-400';
+    case 'info': // Sky
+      variantStyles = 'bg-sky-500 hover:bg-sky-600 text-white shadow-md shadow-sky-200 focus:ring-sky-400 border border-transparent';
       break;
-    case 'violet':
-      variantStyles = 'bg-violet-600 hover:bg-violet-700 text-white focus:ring-violet-500';
+    case 'violet': // Violet
+      variantStyles = 'bg-violet-600 hover:bg-violet-700 text-white shadow-md shadow-violet-200 focus:ring-violet-500 border border-transparent';
       break;
-    case 'yellow':
-      variantStyles = 'bg-yellow-400 hover:bg-yellow-500 text-black focus:ring-yellow-300';
+    case 'yellow': // Yellow (High viz)
+      variantStyles = 'bg-yellow-400 hover:bg-yellow-500 text-slate-900 shadow-md shadow-yellow-200 focus:ring-yellow-300 border border-transparent';
       break;
-    case 'lime':
-      variantStyles = 'bg-lime-500 hover:bg-lime-600 text-white focus:ring-lime-400';
+    case 'lime': // Lime
+      variantStyles = 'bg-lime-500 hover:bg-lime-600 text-white shadow-md shadow-lime-200 focus:ring-lime-400 border border-transparent';
       break;
-    case 'teal':
-      variantStyles = 'bg-teal-500 hover:bg-teal-600 text-white focus:ring-teal-400';
+    case 'teal': // Teal
+      variantStyles = 'bg-teal-600 hover:bg-teal-700 text-white shadow-md shadow-teal-200 focus:ring-teal-500 border border-transparent';
       break;
-    case 'orange':
-      variantStyles = 'bg-orange-500 hover:bg-orange-600 text-white focus:ring-orange-400';
+    case 'orange': // Orange
+      variantStyles = 'bg-orange-500 hover:bg-orange-600 text-white shadow-md shadow-orange-200 focus:ring-orange-400 border border-transparent';
       break;
     case 'ghost':
-      variantStyles = 'bg-transparent hover:bg-slate-100 text-indigo-600 focus:ring-indigo-500 shadow-none hover:shadow-none';
+      variantStyles = 'bg-transparent hover:bg-slate-100 text-slate-600 hover:text-indigo-600 focus:ring-indigo-500 shadow-none border border-transparent';
       break;
   }
 
@@ -68,19 +68,19 @@ const Button: React.FC<ButtonProps> = ({
   switch (size) {
     case 'sm':
       sizeStyles = 'px-3 py-1.5 text-xs';
-      iconSize = 16;
+      iconSize = 14;
       break;
     case 'md':
       sizeStyles = 'px-4 py-2 text-sm';
       iconSize = 18;
       break;
     case 'lg':
-      sizeStyles = 'px-5 py-2.5 text-base';
+      sizeStyles = 'px-6 py-3 text-base';
       iconSize = 20;
       break;
     case 'xl':
-      sizeStyles = 'px-6 py-3 text-lg';
-      iconSize = 22;
+      sizeStyles = 'px-8 py-4 text-lg';
+      iconSize = 24;
       break;
   }
 
@@ -91,7 +91,7 @@ const Button: React.FC<ButtonProps> = ({
   if (leftIcon) {
       const iconProps: { size: number; className: string; } = {
           size: iconSize,
-          className: 'mr-2',
+          className: 'mr-2 -ml-0.5',
       };
       if ((leftIcon.props as any).className) {
         iconProps.className += ' ' + (leftIcon.props as any).className;
@@ -103,7 +103,7 @@ const Button: React.FC<ButtonProps> = ({
   if (rightIcon) {
       const iconProps: { size: number; className: string; } = {
           size: iconSize,
-          className: 'ml-2',
+          className: 'ml-2 -mr-0.5',
       };
       if ((rightIcon.props as any).className) {
         iconProps.className += ' ' + (rightIcon.props as any).className;
