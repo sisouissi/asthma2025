@@ -1,4 +1,3 @@
-
 export type AgeGroup = 'adult' | 'child' | 'youngChild';
 
 export type StepId = 
@@ -195,6 +194,7 @@ export interface OptimizationPlan {
     dateInitiated: string;
     interventions: string[];
     followUpDate: string | null;
+    comorbidityPlan?: string; // Added for Stage 5
 }
 
 export interface SevereAsthmaBasicInfo {
@@ -258,8 +258,10 @@ export interface SevereAsthmaPatientData {
     comorbidities: string[];
     riskFactors: string[];
     investigations: SevereAsthmaInvestigations;
-    status?: 'screening' | 'optimizing' | 'addressing_factors' | 'confirmed_severe' | 'rejected_severe' | null;
+    status?: 'screening' | 'optimizing' | 'controlled_on_optimization' | 'addressing_factors' | 'confirmed_severe' | 'rejected_severe' | 'biologic_trial' | 'biologic_failure' | null;
     optimizationPlan?: OptimizationPlan;
+    selectedBiologic?: string; 
+    biologicResponse?: 'good' | 'partial' | 'no' | null;
 }
 
 export interface SevereAsthmaAssessmentResults {
@@ -461,7 +463,9 @@ export const initialPatientData: PatientData = {
     riskFactors: [],
     investigations: { chestXray: false, hrct: false, allergyTesting: false, boneDensity: false, parasiteScreen: false, cardiacAssessment: false },
     status: 'screening',
-    optimizationPlan: undefined
+    optimizationPlan: undefined,
+    selectedBiologic: undefined,
+    biologicResponse: null
   },
   severeAsthmaAssessment: { difficultToTreat: false, severeAsthma: false, type2Inflammation: false, eligibleForBiologics: false },
   actHistory: [],

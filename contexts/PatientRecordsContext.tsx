@@ -1,6 +1,3 @@
-
-
-
 import React, { createContext, useState, useContext, ReactNode, useEffect, useCallback } from 'react';
 import { PatientProfile, ConsultationRecord, PatientData } from '../types';
 
@@ -33,11 +30,11 @@ const DUMMY_PATIENTS: PatientProfile[] = [
         dateOfBirth: '1980-05-15', // ~44 years old
         fileNumber: 'A-1001',
         treatingPhysician: 'Dr. House',
-        createdAt: getPastDate(6),
+        createdAt: getPastDate(12),
         consultations: [
-            {
+             {
                 id: 'consult-adult-1',
-                date: getPastDate(3), // 3 months ago
+                date: getPastDate(6),
                 data: {
                     activePatientId: 'dummy-adult-1',
                     activeConsultationId: 'consult-adult-1',
@@ -67,42 +64,106 @@ const DUMMY_PATIENTS: PatientProfile[] = [
                         persistentLimitation: false,
                         identifiedPhenotype: "Allergic Asthma"
                     },
-                    adult_symptomFrequency: 'twiceAMonthOrMore',
+                    adult_symptomFrequency: 'mostDaysOrWakingWeekly',
                     adult_initialAssessment: {
-                        symptomFrequency: 'Twice a month or more',
-                        nightWaking: 'Rarely',
+                        symptomFrequency: 'Most days',
+                        nightWaking: 'Yes, once a week or more',
                         severePresentation: false
                     },
-                    adult_currentGinaStep: 2,
-                    adult_pathway: 'pathway2',
+                    adult_currentGinaStep: 4,
+                    adult_pathway: 'pathway1',
                     adult_controlLevel: null,
                     adult_controlAssessmentAnswers: null,
                     adult_riskFactors: ['smoking'],
-                    adult_reviewReminderDate: getPastDate(0),
-                    actHistory: [{ date: getPastDate(3), score: 16 }],
+                    adult_reviewReminderDate: getPastDate(3),
+                    actHistory: [{ date: getPastDate(6), score: 14 }],
                     currentPrescription: [
-                        {
-                            id: 'rx-1',
-                            medicationId: '5', // Pulmicort
-                            medicationName: 'Pulmicort (Budesonide)',
-                            instructions: '200mcg, 1 puff twice daily',
+                         {
+                            id: 'rx-hist-1',
+                            medicationId: '2', 
+                            medicationName: 'Symbicort (Budesonide/Formoterol)',
+                            instructions: '200/6, 2 puffs twice daily',
                             duration: '3 months'
-                        },
-                        {
-                            id: 'rx-2',
-                            medicationId: '1', // Ventolin
-                            medicationName: 'Ventolin (Salbutamol)',
-                            instructions: '2 puffs as needed',
-                            duration: 'PRN'
                         }
                     ],
-                    // Empty/Default for other ages
-                    acqHistory: [],
-                    cactHistory: [],
-                    child_currentGinaStep: null, child_initialAssessment: null, child_pathway: null, child_controlLevel: null, child_controlAssessmentAnswers: null, child_riskFactors: [], child_reviewReminderDate: null,
-                    youngChild_symptomPattern: null, youngChild_currentGinaStep: null, youngChild_currentTreatmentStrategy: null, youngChild_diagnosisCriteria: null, youngChild_controlLevel: null, youngChild_controlAssessmentAnswers: null, youngChild_riskFactors: [], youngChild_reviewReminderDate: null,
-                    exacerbationSeverity: null,
-                    severeAsthma: { basicInfo: { age: '', diagnosis: 'unconfirmed', asthmaOnset: 'adult', exacerbationsLastYear: '', hospitalizationsLastYear: '', sabaUse: '' }, symptoms: { poorControl: false, frequentExacerbations: false, nightWaking: false, activityLimitation: false, frequentSabaUse: false, allergenDriven: false }, medications: { icsLaba: true, icsDose: 'high', ocs: false, maintenanceOcs: false, ocsDose: '', adherence: 'good', inhalerTechnique: 'correct', mart: false, lama: false, ltra: false, azithromycin: false, biologicsAvailable: null }, biomarkers: { bloodEosinophils: '', feNo: '', sputumEosinophils: '', totalIgE: '', specificIgE: false, skinPrickTest: false, fev1: '', fev1Predicted: '' }, comorbidities: [], riskFactors: [], investigations: { chestXray: false, hrct: false, allergyTesting: false, boneDensity: false, parasiteScreen: false, cardiacAssessment: false } }, severeAsthmaAssessment: { difficultToTreat: false, severeAsthma: false, type2Inflammation: false, eligibleForBiologics: false }
+                    // Defaults
+                    acqHistory: [], cactHistory: [], child_currentGinaStep: null, child_initialAssessment: null, child_pathway: null, child_controlLevel: null, child_controlAssessmentAnswers: null, child_riskFactors: [], child_reviewReminderDate: null, youngChild_symptomPattern: null, youngChild_currentGinaStep: null, youngChild_currentTreatmentStrategy: null, youngChild_diagnosisCriteria: null, youngChild_controlLevel: null, youngChild_controlAssessmentAnswers: null, youngChild_riskFactors: [], youngChild_reviewReminderDate: null, exacerbationSeverity: 'severe', severeAsthma: { basicInfo: { age: '', diagnosis: 'unconfirmed', asthmaOnset: 'adult', exacerbationsLastYear: '', hospitalizationsLastYear: '', sabaUse: '' }, symptoms: { poorControl: false, frequentExacerbations: false, nightWaking: false, activityLimitation: false, frequentSabaUse: false, allergenDriven: false }, medications: { icsLaba: true, icsDose: 'high', ocs: false, maintenanceOcs: false, ocsDose: '', adherence: 'good', inhalerTechnique: 'correct', mart: false, lama: false, ltra: false, azithromycin: false, biologicsAvailable: null }, biomarkers: { bloodEosinophils: '', feNo: '', sputumEosinophils: '', totalIgE: '', specificIgE: false, skinPrickTest: false, fev1: '', fev1Predicted: '' }, comorbidities: [], riskFactors: [], investigations: { chestXray: false, hrct: false, allergyTesting: false, boneDensity: false, parasiteScreen: false, cardiacAssessment: false } }, severeAsthmaAssessment: { difficultToTreat: false, severeAsthma: false, type2Inflammation: false, eligibleForBiologics: false }
+                }
+            },
+            {
+                id: 'consult-adult-2',
+                date: getPastDate(0), // Today/Recent
+                data: {
+                    activePatientId: 'dummy-adult-1',
+                    activeConsultationId: 'consult-adult-2',
+                    consultationType: 'followup',
+                    age: '12+ years',
+                    ageGroup: 'adult',
+                    diagnosisConfirmed: true,
+                    diagnosisSymptoms: {
+                        typical: { symptoms: true, timing: true, variability: true, triggers: true },
+                        atypical: { sputum: false, dizziness: false, chestPain: false, noisyInspiration: false }
+                    },
+                    diagnosisCriteria: {
+                        symptoms: { wheeze: true, sob: true, chestTightness: true, cough: true },
+                        patterns: { variable: true, nightWaking: true, triggers: true, viralWorsening: false },
+                        airflowLimitation: { bdReversibility: true, pefVariability: false, treatmentTrial: false, challengeTest: false, visitVariation: false },
+                        biomarkers: { feNo: '45', bloodEosinophils: '350' }
+                    },
+                    isOnMaintenanceTreatment: true,
+                    onTreatmentDiagnosis: { status: null, fev1_percent: '' },
+                    phenotypeData: {
+                        allergicHistory: true,
+                        familyHistory: true,
+                        childhoodOnset: true,
+                        coughVariant: false,
+                        obesity: false,
+                        worseAtWork: false,
+                        persistentLimitation: false,
+                        identifiedPhenotype: "Allergic Asthma"
+                    },
+                    adult_symptomFrequency: 'mostDaysOrWakingWeekly',
+                    adult_initialAssessment: null,
+                    adult_currentGinaStep: 5,
+                    adult_pathway: 'pathway1',
+                    adult_controlLevel: 'uncontrolled',
+                    adult_controlAssessmentAnswers: {
+                        daytimeSymptoms: true,
+                        activityLimitation: true,
+                        nocturnalSymptoms: true,
+                        relieverNeed: true
+                    },
+                    adult_riskFactors: ['smoking', 'exacerbation_history'],
+                    adult_reviewReminderDate: getPastDate(-1), // Future
+                    actHistory: [{ date: getPastDate(6), score: 14 }, { date: getPastDate(0), score: 12 }],
+                    currentPrescription: [
+                        {
+                            id: 'rx-hist-2',
+                            medicationId: '8', 
+                            medicationName: 'Spiriva Respimat (Tiotropium)',
+                            instructions: '2.5mcg, 2 puffs once daily',
+                            duration: 'Ongoing'
+                        }
+                    ],
+                    // Set Status to Addressing Factors to test loop
+                    severeAsthma: { 
+                        basicInfo: { age: '44', diagnosis: 'confirmed', asthmaOnset: 'adult', exacerbationsLastYear: '2', hospitalizationsLastYear: '0', sabaUse: '5' }, 
+                        symptoms: { poorControl: true, frequentExacerbations: true, nightWaking: true, activityLimitation: true, frequentSabaUse: true, allergenDriven: true }, 
+                        medications: { icsLaba: true, icsDose: 'high', ocs: false, maintenanceOcs: false, ocsDose: '', adherence: 'good', inhalerTechnique: 'correct', mart: true, lama: true, ltra: false, azithromycin: false, biologicsAvailable: 'yes' }, 
+                        biomarkers: { bloodEosinophils: '450', feNo: '45', sputumEosinophils: '', totalIgE: '600', specificIgE: true, skinPrickTest: true, fev1: '55', fev1Predicted: '55' }, 
+                        comorbidities: ['Chronic rhinosinusitis with nasal polyps (CRSwNP)'], 
+                        riskFactors: ['Smoking/Vaping'], 
+                        investigations: { chestXray: true, hrct: false, allergyTesting: true, boneDensity: false, parasiteScreen: false, cardiacAssessment: false },
+                        status: 'addressing_factors',
+                        optimizationPlan: {
+                            dateInitiated: getPastDate(1),
+                            interventions: ['Check & Correct Inhaler Technique', 'Treat CRSwNP / CRSsNP (Nasal polyps)', 'Smoking/Vaping cessation support'],
+                            followUpDate: null
+                        }
+                    }, 
+                    severeAsthmaAssessment: { difficultToTreat: true, severeAsthma: true, type2Inflammation: true, eligibleForBiologics: true },
+                    // Defaults
+                    acqHistory: [], cactHistory: [], child_currentGinaStep: null, child_initialAssessment: null, child_pathway: null, child_controlLevel: null, child_controlAssessmentAnswers: null, child_riskFactors: [], child_reviewReminderDate: null, youngChild_symptomPattern: null, youngChild_currentGinaStep: null, youngChild_currentTreatmentStrategy: null, youngChild_diagnosisCriteria: null, youngChild_controlLevel: null, youngChild_controlAssessmentAnswers: null, youngChild_riskFactors: [], youngChild_reviewReminderDate: null, exacerbationSeverity: null
                 }
             }
         ]
@@ -118,7 +179,7 @@ const DUMMY_PATIENTS: PatientProfile[] = [
         consultations: [
              {
                 id: 'consult-child-1',
-                date: getPastDate(2), // 2 months ago
+                date: getPastDate(3), // 3 months ago
                 data: {
                     activePatientId: 'dummy-child-1',
                     activeConsultationId: 'consult-child-1',
@@ -156,18 +217,19 @@ const DUMMY_PATIENTS: PatientProfile[] = [
                         severePresentation: false
                     },
                     child_riskFactors: ['allergen_exposure'],
-                    cactHistory: [{ date: getPastDate(2), score: 19 }],
+                    cactHistory: [{ date: getPastDate(3), score: 18 }],
+                    exacerbationSeverity: 'mildModerate',
                     currentPrescription: [
                         {
                             id: 'rx-child-1',
                             medicationId: '2', // Symbicort
                             medicationName: 'Symbicort (Budesonide/Formoterol)',
                             instructions: '100/6, 1 puff daily + PRN (MART)',
-                            duration: '2 months'
+                            duration: '3 months'
                         }
                     ],
                     // Defaults
-                    actHistory: [], acqHistory: [], adult_symptomFrequency: null, adult_initialAssessment: null, adult_controlLevel: null, adult_controlAssessmentAnswers: null, adult_pathway: null, adult_currentGinaStep: null, adult_riskFactors: [], adult_reviewReminderDate: null, child_controlLevel: null, child_controlAssessmentAnswers: null, child_reviewReminderDate: null, youngChild_symptomPattern: null, youngChild_currentGinaStep: null, youngChild_currentTreatmentStrategy: null, youngChild_diagnosisCriteria: null, youngChild_controlLevel: null, youngChild_controlAssessmentAnswers: null, youngChild_riskFactors: [], youngChild_reviewReminderDate: null, exacerbationSeverity: null, severeAsthma: { basicInfo: { age: '', diagnosis: 'unconfirmed', asthmaOnset: 'adult', exacerbationsLastYear: '', hospitalizationsLastYear: '', sabaUse: '' }, symptoms: { poorControl: false, frequentExacerbations: false, nightWaking: false, activityLimitation: false, frequentSabaUse: false, allergenDriven: false }, medications: { icsLaba: true, icsDose: 'high', ocs: false, maintenanceOcs: false, ocsDose: '', adherence: 'good', inhalerTechnique: 'correct', mart: false, lama: false, ltra: false, azithromycin: false, biologicsAvailable: null }, biomarkers: { bloodEosinophils: '', feNo: '', sputumEosinophils: '', totalIgE: '', specificIgE: false, skinPrickTest: false, fev1: '', fev1Predicted: '' }, comorbidities: [], riskFactors: [], investigations: { chestXray: false, hrct: false, allergyTesting: false, boneDensity: false, parasiteScreen: false, cardiacAssessment: false } }, severeAsthmaAssessment: { difficultToTreat: false, severeAsthma: false, type2Inflammation: false, eligibleForBiologics: false }
+                    actHistory: [], acqHistory: [], adult_symptomFrequency: null, adult_initialAssessment: null, adult_controlLevel: null, adult_controlAssessmentAnswers: null, adult_pathway: null, adult_currentGinaStep: null, adult_riskFactors: [], adult_reviewReminderDate: null, child_controlLevel: null, child_controlAssessmentAnswers: null, child_reviewReminderDate: null, youngChild_symptomPattern: null, youngChild_currentGinaStep: null, youngChild_currentTreatmentStrategy: null, youngChild_diagnosisCriteria: null, youngChild_controlLevel: null, youngChild_controlAssessmentAnswers: null, youngChild_riskFactors: [], youngChild_reviewReminderDate: null, severeAsthma: { basicInfo: { age: '', diagnosis: 'unconfirmed', asthmaOnset: 'adult', exacerbationsLastYear: '', hospitalizationsLastYear: '', sabaUse: '' }, symptoms: { poorControl: false, frequentExacerbations: false, nightWaking: false, activityLimitation: false, frequentSabaUse: false, allergenDriven: false }, medications: { icsLaba: true, icsDose: 'high', ocs: false, maintenanceOcs: false, ocsDose: '', adherence: 'good', inhalerTechnique: 'correct', mart: false, lama: false, ltra: false, azithromycin: false, biologicsAvailable: null }, biomarkers: { bloodEosinophils: '', feNo: '', sputumEosinophils: '', totalIgE: '', specificIgE: false, skinPrickTest: false, fev1: '', fev1Predicted: '' }, comorbidities: [], riskFactors: [], investigations: { chestXray: false, hrct: false, allergyTesting: false, boneDensity: false, parasiteScreen: false, cardiacAssessment: false } }, severeAsthmaAssessment: { difficultToTreat: false, severeAsthma: false, type2Inflammation: false, eligibleForBiologics: false }
                 }
             }
         ]
@@ -179,8 +241,75 @@ const DUMMY_PATIENTS: PatientProfile[] = [
         dateOfBirth: '2021-11-10', // ~3 years old
         fileNumber: 'Y-3003',
         treatingPhysician: 'Dr. Who',
-        createdAt: new Date().toISOString(),
-        consultations: []
+        createdAt: getPastDate(2),
+        consultations: [
+            {
+                id: 'consult-young-1',
+                date: getPastDate(1),
+                data: {
+                    activePatientId: 'dummy-young-1',
+                    activeConsultationId: 'consult-young-1',
+                    consultationType: 'initial',
+                    age: '<=5 years',
+                    ageGroup: 'youngChild',
+                    diagnosisConfirmed: true,
+                    diagnosisSymptoms: {
+                        typical: { symptoms: true, timing: false, variability: false, triggers: true },
+                        atypical: { sputum: false, dizziness: false, chestPain: false, noisyInspiration: false }
+                    },
+                    isOnMaintenanceTreatment: false,
+                    youngChild_diagnosisCriteria: { criterion1: true, criterion2: true, criterion3: true },
+                    youngChild_symptomPattern: 'infrequentViralWheeze',
+                    youngChild_currentGinaStep: 1,
+                    youngChild_currentTreatmentStrategy: 'preferred',
+                    youngChild_controlLevel: 'wellControlled',
+                    exacerbationSeverity: 'mildModerate', // History of one mild exacerbation
+                    currentPrescription: [
+                         {
+                            id: 'rx-young-1',
+                            medicationId: '1', 
+                            medicationName: 'Ventolin (Salbutamol)',
+                            instructions: '2 puffs via spacer as needed',
+                            duration: 'PRN'
+                        }
+                    ],
+                    // Defaults
+                     diagnosisCriteria: { symptoms: { wheeze: false, sob: false, chestTightness: false, cough: false }, patterns: { variable: false, nightWaking: false, triggers: false, viralWorsening: false }, airflowLimitation: { bdReversibility: false, pefVariability: false, treatmentTrial: false, challengeTest: false, visitVariation: false }, biomarkers: { feNo: '', bloodEosinophils: '' } }, onTreatmentDiagnosis: { status: null, fev1_percent: '' }, phenotypeData: { allergicHistory: null, familyHistory: null, childhoodOnset: null, coughVariant: null, obesity: null, worseAtWork: null, persistentLimitation: null, identifiedPhenotype: null }, adult_symptomFrequency: null, adult_initialAssessment: null, adult_controlLevel: null, adult_controlAssessmentAnswers: null, adult_pathway: null, adult_currentGinaStep: null, adult_riskFactors: [], adult_reviewReminderDate: null, child_currentGinaStep: null, child_initialAssessment: null, child_pathway: null, child_controlLevel: null, child_controlAssessmentAnswers: null, child_riskFactors: [], child_reviewReminderDate: null, youngChild_controlAssessmentAnswers: null, youngChild_riskFactors: [], youngChild_reviewReminderDate: null, actHistory: [], acqHistory: [], cactHistory: [], severeAsthma: { basicInfo: { age: '', diagnosis: 'unconfirmed', asthmaOnset: 'adult', exacerbationsLastYear: '', hospitalizationsLastYear: '', sabaUse: '' }, symptoms: { poorControl: false, frequentExacerbations: false, nightWaking: false, activityLimitation: false, frequentSabaUse: false, allergenDriven: false }, medications: { icsLaba: true, icsDose: 'high', ocs: false, maintenanceOcs: false, ocsDose: '', adherence: 'good', inhalerTechnique: 'correct', mart: false, lama: false, ltra: false, azithromycin: false, biologicsAvailable: null }, biomarkers: { bloodEosinophils: '', feNo: '', sputumEosinophils: '', totalIgE: '', specificIgE: false, skinPrickTest: false, fev1: '', fev1Predicted: '' }, comorbidities: [], riskFactors: [], investigations: { chestXray: false, hrct: false, allergyTesting: false, boneDensity: false, parasiteScreen: false, cardiacAssessment: false }, status: 'screening', optimizationPlan: undefined }, severeAsthmaAssessment: { difficultToTreat: false, severeAsthma: false, type2Inflammation: false, eligibleForBiologics: false }
+                }
+            }
+        ]
+    },
+     {
+        id: 'dummy-adult-2',
+        lastName: 'Currie',
+        firstName: 'Marie',
+        dateOfBirth: '1990-11-07', 
+        fileNumber: 'A-1005',
+        treatingPhysician: 'Dr. Banner',
+        createdAt: getPastDate(1),
+        consultations: [
+            {
+                 id: 'consult-adult-marie-1',
+                 date: getPastDate(1),
+                 data: {
+                    activePatientId: 'dummy-adult-2',
+                    activeConsultationId: 'consult-adult-marie-1',
+                    consultationType: 'followup',
+                    age: '12+ years',
+                    ageGroup: 'adult',
+                    diagnosisConfirmed: true,
+                    adult_currentGinaStep: 4,
+                    adult_pathway: 'pathway1',
+                    adult_controlLevel: 'uncontrolled',
+                    adult_controlAssessmentAnswers: { daytimeSymptoms: true, activityLimitation: false, nocturnalSymptoms: true, relieverNeed: true },
+                    currentPrescription: [
+                        { id: 'rx-m1', medicationId: '2', medicationName: 'Symbicort 200/6', instructions: '2 puffs twice daily', duration: '3 months' }
+                    ],
+                     // Defaults
+                     diagnosisSymptoms: { typical: { symptoms: true, timing: true, variability: true, triggers: true }, atypical: { sputum: false, dizziness: false, chestPain: false, noisyInspiration: false } }, diagnosisCriteria: { symptoms: { wheeze: false, sob: false, chestTightness: false, cough: false }, patterns: { variable: false, nightWaking: false, triggers: false, viralWorsening: false }, airflowLimitation: { bdReversibility: false, pefVariability: false, treatmentTrial: false, challengeTest: false, visitVariation: false }, biomarkers: { feNo: '', bloodEosinophils: '' } }, isOnMaintenanceTreatment: true, onTreatmentDiagnosis: { status: null, fev1_percent: '' }, phenotypeData: { allergicHistory: null, familyHistory: null, childhoodOnset: null, coughVariant: null, obesity: null, worseAtWork: null, persistentLimitation: null, identifiedPhenotype: null }, adult_symptomFrequency: null, adult_initialAssessment: null, adult_riskFactors: [], adult_reviewReminderDate: null, child_currentGinaStep: null, child_initialAssessment: null, child_pathway: null, child_controlLevel: null, child_controlAssessmentAnswers: null, child_riskFactors: [], child_reviewReminderDate: null, youngChild_symptomPattern: null, youngChild_currentGinaStep: null, youngChild_currentTreatmentStrategy: null, youngChild_diagnosisCriteria: null, youngChild_controlLevel: null, youngChild_controlAssessmentAnswers: null, youngChild_riskFactors: [], youngChild_reviewReminderDate: null, exacerbationSeverity: null, severeAsthma: { basicInfo: { age: '', diagnosis: 'unconfirmed', asthmaOnset: 'adult', exacerbationsLastYear: '', hospitalizationsLastYear: '', sabaUse: '' }, symptoms: { poorControl: false, frequentExacerbations: false, nightWaking: false, activityLimitation: false, frequentSabaUse: false, allergenDriven: false }, medications: { icsLaba: true, icsDose: 'high', ocs: false, maintenanceOcs: false, ocsDose: '', adherence: 'good', inhalerTechnique: 'correct', mart: false, lama: false, ltra: false, azithromycin: false, biologicsAvailable: null }, biomarkers: { bloodEosinophils: '', feNo: '', sputumEosinophils: '', totalIgE: '', specificIgE: false, skinPrickTest: false, fev1: '', fev1Predicted: '' }, comorbidities: [], riskFactors: [], investigations: { chestXray: false, hrct: false, allergyTesting: false, boneDensity: false, parasiteScreen: false, cardiacAssessment: false }, status: 'screening', optimizationPlan: undefined }, severeAsthmaAssessment: { difficultToTreat: false, severeAsthma: false, type2Inflammation: false, eligibleForBiologics: false }, actHistory: [], acqHistory: [], cactHistory: []
+                 }
+            }
+        ]
     }
 ];
 

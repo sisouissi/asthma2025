@@ -1,8 +1,4 @@
 
-
-
-
-
 export {
   Home,
   Users,
@@ -22,12 +18,13 @@ export {
   RotateCcw,
   Info,
   Baby,
-  User, // Replaced Child with User
+  User,
   PersonStanding,
   PlusCircle,
   MinusCircle,
   XCircle,
   CheckCircle2,
+  CheckCircle, // Added missing export
   TrendingUp,
   TrendingDown,
   ListChecks,
@@ -65,5 +62,8 @@ export {
   Plus,
   Lock,
   Unlock,
-  Key
+  Key,
+  Microscope,
+  Scan,
+  BarChart3
 } from 'lucide-react';
