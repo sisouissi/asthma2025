@@ -48,6 +48,7 @@ const Stage4_ReviewResponse: React.FC = () => {
     
     const handleStepDownAnswer = (value: 'yes' | 'no') => {
         setStepDownResult(value);
+        // Set default next review date to 3 months from now if 'no' (controlled)
         if (value === 'no') {
             const d = new Date();
             d.setMonth(d.getMonth() + 3);
@@ -161,7 +162,7 @@ const Stage4_ReviewResponse: React.FC = () => {
             )}
 
             <AssessmentCard title={isAddressingFactors ? "Review After Specialist Intervention" : "Review Response"} icon={<Calendar />}>
-                 {/* Review Checklist (Same as before) */}
+                 {/* Review Checklist */}
                 <div className="mb-6 p-4 bg-indigo-50 border border-indigo-200 rounded-lg">
                     <h4 className="font-semibold text-indigo-900 mb-2 flex items-center"><ListChecks size={18} className="mr-2"/>Review Checklist</h4>
                     <ul className="list-disc list-inside text-sm text-indigo-700 grid grid-cols-1 md:grid-cols-2 gap-1">
@@ -209,6 +210,9 @@ const Stage4_ReviewResponse: React.FC = () => {
                             <div className="mt-4 p-5 bg-red-50 border-l-4 border-red-500 rounded-r-md animate-fade-in">
                                 <h4 className="font-bold text-red-800 flex items-center mb-2 text-lg"><XCircle size={24} className="mr-2"/>YES: Asthma is still uncontrolled</h4>
                                 <p className="text-sm text-red-700 mb-4">Since asthma is still uncontrolled despite optimized therapy, the diagnosis of <strong>Severe Asthma</strong> is likely.</p>
+                                <p className="text-sm text-red-700 mb-4 font-semibold italic">
+                                    "Severe asthma is asthma that is uncontrolled despite adherence to maximal optimized high-dose ICS-LABA treatment and management of contributory factors." (GINA 2025)
+                                </p>
                                 <Button onClick={() => updateStatus('confirmed_severe')} variant="danger" rightIcon={<ChevronRight />} size="lg">Confirm Severe Asthma & Proceed</Button>
                             </div>
                         )}
@@ -218,12 +222,13 @@ const Stage4_ReviewResponse: React.FC = () => {
                 {/* CONTROLLED SCENARIO - Step Down Loop */}
                 {controlResult === 'controlled' && (
                     <div className="mt-4 p-5 bg-emerald-50 border-l-4 border-emerald-500 rounded-r-md animate-fade-in">
-                        <h4 className="font-bold text-emerald-800 flex items-center mb-2 text-lg"><CheckCircle2 size={24} className="mr-2"/>NO: Asthma is well controlled</h4>
+                        <h4 className="font-bold text-emerald-800 flex items-center mb-2 text-lg"><CheckCircle2 size={24} className="mr-2"/>NO: Asthma is now well controlled</h4>
                         
                          {isAddressingFactors ? (
                             // Coming from Specialist Factor Treatment -> Success -> Difficult to Treat Asthma
                             <>
-                                <p className="text-sm text-emerald-700 mb-4">Symptoms improved after treating comorbidities/factors. This confirms <strong>"Difficult-to-Treat Asthma"</strong> (not Severe Asthma).</p>
+                                <p className="text-sm text-emerald-700 mb-4">Symptoms improved after treating comorbidities/factors. This confirms <strong>"Difficult-to-Treat Asthma"</strong> (NOT Severe Asthma).</p>
+                                <p className="text-xs text-emerald-600 mb-4 italic">Asthma is not classified as severe if it markedly improves when contributory factors such as inhaler technique and adherence are addressed.</p>
                                 <div className="bg-white p-4 rounded-lg border border-emerald-200 mb-4">
                                     <h6 className="text-sm font-medium text-slate-700 mb-2">Prescribe Maintenance Treatment</h6>
                                     <PrescriptionWriter />
@@ -234,6 +239,7 @@ const Stage4_ReviewResponse: React.FC = () => {
                             // Standard Optimization Success -> Monitoring Loop
                             <>
                                 <div className="text-sm text-emerald-700 space-y-2 mb-6">
+                                    <p>This indicates <strong>Difficult-to-Treat Asthma</strong> that is now managed, rather than Refractory Severe Asthma.</p>
                                     <p>Consider stepping down treatment to find the minimum effective dose. Do not stop ICS.</p>
                                 </div>
                                 <div className="bg-white p-4 rounded-lg border border-emerald-200 mb-4">
@@ -241,7 +247,7 @@ const Stage4_ReviewResponse: React.FC = () => {
                                     <PrescriptionWriter />
                                 </div>
                                 <div className="bg-white p-4 rounded-lg border border-emerald-200 mb-4">
-                                    <h6 className="text-sm font-medium text-slate-700 mb-2">Schedule Re-evaluation</h6>
+                                    <h6 className="text-sm font-medium text-slate-700 mb-2">Schedule Step-Down Review</h6>
                                     <div className="flex items-center gap-4">
                                         <input type="date" className="p-2 border border-slate-300 rounded text-sm" value={nextReviewDate} onChange={(e) => setNextReviewDate(e.target.value)} />
                                         <span className="text-xs text-slate-500">(Recommended: 3 months)</span>
