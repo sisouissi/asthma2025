@@ -215,38 +215,36 @@ const ChildTreatmentPlanStep: React.FC = () => {
       </div>
 
       <div className="mt-8 pt-4 border-t border-slate-200">
-        {/* Only show Adjustment Steps during follow-up consultations */}
-        {consultationType === 'followup' && (
-            <div className="mb-6">
-                <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-500 text-center mb-4">Adjust Treatment Step ({pathwayNameDisplay}):</h3>
-                <div className="flex justify-center items-center space-x-3 mb-2">
-                <Button 
-                    onClick={() => handleStepChange(child_currentGinaStep - 1)} 
-                    disabled={!canStepDown}
-                    variant="secondary"
-                    leftIcon={<MinusCircle />}
-                    aria-label="Decrease treatment step"
-                    size="md"
-                >
-                    Step Down
-                </Button>
-                <span className="text-lg font-bold text-emerald-600 w-24 text-center py-1.5 border border-slate-300 rounded-md bg-slate-50">Step {child_currentGinaStep}</span>
-                <Button 
-                    onClick={() => handleStepChange(child_currentGinaStep + 1)} 
-                    disabled={!canStepUp}
-                    variant="secondary"
-                    leftIcon={<PlusCircle />}
-                    aria-label="Increase treatment step"
-                    size="md"
-                >
-                    Step Up
-                </Button>
-                </div>
-                <p className="text-xs text-slate-500 text-center">
-                Step up if poorly controlled. Step down if well controlled for 3 months. Inhaler technique and adherence are crucial.
-                </p>
+        {/* Show Adjustment Steps ALWAYS for simulation */}
+        <div className="mb-6">
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-500 text-center mb-4">Adjust Treatment Step ({pathwayNameDisplay}):</h3>
+            <div className="flex justify-center items-center space-x-3 mb-2">
+            <Button 
+                onClick={() => handleStepChange(child_currentGinaStep - 1)} 
+                disabled={!canStepDown}
+                variant="secondary"
+                leftIcon={<MinusCircle />}
+                aria-label="Decrease treatment step"
+                size="md"
+            >
+                Step Down
+            </Button>
+            <span className="text-lg font-bold text-emerald-600 w-24 text-center py-1.5 border border-slate-300 rounded-md bg-slate-50">Step {child_currentGinaStep}</span>
+            <Button 
+                onClick={() => handleStepChange(child_currentGinaStep + 1)} 
+                disabled={!canStepUp}
+                variant="secondary"
+                leftIcon={<PlusCircle />}
+                aria-label="Increase treatment step"
+                size="md"
+            >
+                Step Up
+            </Button>
             </div>
-        )}
+            <p className="text-xs text-slate-500 text-center">
+            Step up if poorly controlled. Step down if well controlled for 3 months. Inhaler technique and adherence are crucial.
+            </p>
+        </div>
 
         {patientData.activePatientId && (
             <div className="mt-4 border-t border-slate-300 pt-6 flex justify-center">

@@ -3,7 +3,7 @@ import { useNavigation } from '../../../contexts/NavigationContext';
 import { usePatientData } from '../../../contexts/PatientDataContext';
 import { usePatientRecords } from '../../../contexts/PatientRecordsContext';
 import { StepId } from '../../../types';
-import { ChevronDown, ChevronUp, ArrowLeft, ArrowRight, User, Activity } from 'lucide-react';
+import { ChevronDown, ChevronUp, ArrowLeft, ArrowRight, User, Activity } from '../../../constants/icons';
 import Button from '../../ui/Button';
 
 // Re-using the same stages as the main pathway
@@ -54,7 +54,6 @@ const PatientSevereAsthmaManager: React.FC = () => {
     
     const activeStage = stages.find(s => s.stepId === currentStepId);
     const activeStageId = activeStage ? activeStage.id : 1;
-    const stagesWithInternalNav = [1, 2, 3, 4, 5, 7, 8]; // Stages that manage their own "Next" logic
     const patientProfile = patientData.activePatientId ? getPatient(patientData.activePatientId) : null;
 
     // --- SMART ROUTING LOGIC FOR PATIENT CARE ---
@@ -64,12 +63,17 @@ const PatientSevereAsthmaManager: React.FC = () => {
             const status = patientData.severeAsthma.status;
             
             // 1. If patient is returning for 3-6 month review (Optimizing) OR returning after treating factors
-            if (status === 'optimizing' || status === 'addressing_factors') {
+            if (status === 'optimizing' || status === 'addressing_factors' || status === 'controlled_on_optimization') {
                 navigateTo('SEVERE_ASTHMA_STAGE_4');
             }
-            // 2. If severe asthma is confirmed (e.g. on biologics), go straight to monitoring
+            // 2. If patient is returning for Biologic Trial Evaluation
+            else if (status === 'biologic_trial') {
+                navigateTo('SEVERE_ASTHMA_STAGE_8');
+            }
+            // 3. If severe asthma is confirmed and ongoing (e.g. on biologics), 
+            // Route to Stage 8 to re-evaluate efficacy ("Is response still good?") -> which leads to Stage 9.
             else if (status === 'confirmed_severe') {
-                navigateTo('SEVERE_ASTHMA_STAGE_9');
+                navigateTo('SEVERE_ASTHMA_STAGE_8');
             }
         }
     }, [patientData.severeAsthma.status, currentStepId, navigateTo]);

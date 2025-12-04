@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { usePatientData } from '../../../contexts/PatientDataContext';
 import { usePatientRecords } from '../../../contexts/PatientRecordsContext';
@@ -119,7 +118,7 @@ const AdultTreatmentPlanStep: React.FC = () => {
                   hospitalizationsLastYear: screeningData.hospitalizations,
                   sabaUse: screeningData.sabaUse,
                   diagnosis: 'confirmed', // Assuming diagnosis confirmed if they are at Step 5
-                  asthmaOnset: 'adult' // Default, user can change in the form
+                  asthmaOnset: patientData.phenotypeData?.childhoodOnset ? 'childhood' : 'adult' 
               },
               symptoms: {
                   ...patientData.severeAsthma.symptoms,
@@ -129,13 +128,18 @@ const AdultTreatmentPlanStep: React.FC = () => {
                   poorControl: isUncontrolled,
                   frequentExacerbations: exacCount >= 2 || hospCount >= 1,
                   frequentSabaUse: sabaCount >= 3,
-                  // allergenDriven: defaults to false, user sets in Stage 1
+                  allergenDriven: patientData.phenotypeData?.allergicHistory ?? false
               },
               medications: {
                   ...patientData.severeAsthma.medications,
                   icsLaba: true, // Implied by Step 4/5
                   icsDose: 'high', // Implied by Step 5
-              }
+                  // Assume adherence is 'good' for initial screening, to be verified in Stage 2
+                  adherence: 'unknown',
+                  inhalerTechnique: 'unknown'
+              },
+              // Transfer any known risk factors
+              riskFactors: patientData.adult_riskFactors || []
           }
       });
       // Navigate to the start of the severe asthma flow
@@ -346,38 +350,36 @@ const AdultTreatmentPlanStep: React.FC = () => {
       </div>
 
       <div className="mt-8 pt-4 border-t border-slate-200">
-         {/* Only show Adjustment Steps during follow-up consultations */}
-         {consultationType === 'followup' && (
-             <div className="mb-6">
-                <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-500 text-center mb-4">Adjust Treatment Step:</h3>
-                <div className="flex justify-center items-center space-x-3 mb-2">
-                <Button 
-                    onClick={() => handleStepChange(adult_currentGinaStep - 1)} 
-                    disabled={!canStepDown}
-                    variant="secondary"
-                    leftIcon={<MinusCircle />}
-                    aria-label="Decrease treatment step"
-                    size="sm"
-                >
-                    Step Down
-                </Button>
-                <span className="text-lg font-bold text-sky-600 w-24 text-center py-1.5 border border-slate-300 rounded-md bg-slate-50">Step {adult_currentGinaStep}</span>
-                <Button 
-                    onClick={() => handleStepChange(adult_currentGinaStep + 1)} 
-                    disabled={!canStepUp}
-                    variant="secondary"
-                    leftIcon={<PlusCircle />}
-                    aria-label="Increase treatment step"
-                    size="sm"
-                >
-                    Step Up
-                </Button>
-                </div>
-                <p className="text-xs text-slate-500 text-center">
-                Step up if poorly controlled. Step down if well controlled for 3 months. Review factors before stepping up.
-                </p>
+         {/* Show Adjustment Steps ALWAYS for simulation, regardless of initial/followup */}
+         <div className="mb-6">
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-500 text-center mb-4">Adjust Treatment Step:</h3>
+            <div className="flex justify-center items-center space-x-3 mb-2">
+            <Button 
+                onClick={() => handleStepChange(adult_currentGinaStep - 1)} 
+                disabled={!canStepDown}
+                variant="secondary"
+                leftIcon={<MinusCircle />}
+                aria-label="Decrease treatment step"
+                size="sm"
+            >
+                Step Down
+            </Button>
+            <span className="text-lg font-bold text-sky-600 w-24 text-center py-1.5 border border-slate-300 rounded-md bg-slate-50">Step {adult_currentGinaStep}</span>
+            <Button 
+                onClick={() => handleStepChange(adult_currentGinaStep + 1)} 
+                disabled={!canStepUp}
+                variant="secondary"
+                leftIcon={<PlusCircle />}
+                aria-label="Increase treatment step"
+                size="sm"
+            >
+                Step Up
+            </Button>
             </div>
-         )}
+            <p className="text-xs text-slate-500 text-center">
+            Step up if poorly controlled. Step down if well controlled for 3 months. Review factors before stepping up.
+            </p>
+        </div>
 
         {patientData.activePatientId && (
             <div className="mt-4 border-t border-slate-300 pt-6 flex justify-center">

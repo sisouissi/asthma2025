@@ -10,6 +10,7 @@ import { CheckCircle2, AlertTriangle, XCircle, ChevronRight, ListChecks } from '
 import ACTModalContent from '../../common/modal_content/ACTModalContent';
 import ACQModalContent from '../../common/modal_content/ACQModalContent';
 import FollowUpContext from '../../common/FollowUpContext';
+import ManagementCycleWidget from '../../common/ManagementCycleWidget';
 
 
 interface ControlQuestion {
@@ -78,6 +79,7 @@ const AdultControlAssessmentStep: React.FC = () => {
 
   return (
     <Card title="Asthma Control Assessment (Adult)" icon={<ListChecks className="text-sky-600" />}>
+      <ManagementCycleWidget ageGroup="adult" />
       <FollowUpContext />
       
       <p className="mb-1 text-sm text-slate-600">

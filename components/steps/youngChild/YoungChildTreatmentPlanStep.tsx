@@ -294,8 +294,8 @@ const YoungChildTreatmentPlanStep: React.FC = () => {
         </div>
       )}
       
-      {/* Only show Adjustment Steps during follow-up consultations */}
-      {consultationType === 'followup' && youngChild_currentGinaStep !== 4 && ( 
+      {/* Show Adjustment Steps ALWAYS for simulation */}
+      {youngChild_currentGinaStep !== 4 && ( 
           <div className="mt-8 pt-6 border-t border-slate-200">
             <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-500 text-center mb-4">Adjust Treatment Step:</h3>
             <div className="flex justify-center items-center space-x-3 mb-2">

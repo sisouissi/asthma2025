@@ -1,7 +1,9 @@
 import React, { useMemo } from 'react';
 import { usePatientData } from '../../../contexts/PatientDataContext';
+import { useNavigation } from '../../../contexts/NavigationContext';
+import { usePatientRecords } from '../../../contexts/PatientRecordsContext';
 import AssessmentCard from './AssessmentCard';
-import { User, Droplets, FlaskConical, ShieldAlert, CheckCircle, XCircle, FileText, ClipboardList, Printer, Heart, Stethoscope, Calendar, Activity, Syringe } from 'lucide-react';
+import { User, Droplets, FlaskConical, ShieldAlert, CheckCircle, XCircle, FileText, ClipboardList, Printer, Heart, Stethoscope, Calendar, Activity, Syringe, Save } from '../../../constants/icons';
 import { getBiologicRecommendation } from '../../../constants/severeAsthmaData';
 import Button from '../../ui/Button';
 
@@ -49,11 +51,25 @@ const ListBlock: React.FC<{ title?: string; items: string[] }> = ({ title, items
 
 const Stage11_SummaryReport: React.FC = () => {
     const { patientData } = usePatientData();
+    const { navigateTo } = useNavigation();
+    const { saveConsultation, updateConsultation } = usePatientRecords();
+    
     const { severeAsthma: data, severeAsthmaAssessment: assessment } = patientData;
     const topRecommendation = useMemo(() => getBiologicRecommendation(patientData)?.[0], [patientData]);
 
     const handlePrint = () => {
         window.print();
+    };
+
+    const handleSaveAndExit = () => {
+        if (patientData.activePatientId) {
+            if (patientData.activeConsultationId) {
+                updateConsultation(patientData.activePatientId, patientData.activeConsultationId, patientData);
+            } else {
+                saveConsultation(patientData.activePatientId, patientData);
+            }
+            navigateTo('PATIENT_DASHBOARD');
+        }
     };
 
     // Prepare lists for display
@@ -63,6 +79,18 @@ const Stage11_SummaryReport: React.FC = () => {
 
     return (
         <div id="summary-report-content">
+             {data.status === 'biologic_failure' && (
+                 <div className="mb-6 p-4 bg-red-50 border-l-8 border-red-600 rounded-lg shadow-sm printable-card">
+                    <h2 className="text-xl font-bold text-red-800 flex items-center">
+                        <XCircle size={24} className="mr-3"/>
+                        Biologic Therapy Failed
+                    </h2>
+                    <p className="text-sm text-red-700 mt-2">
+                        This patient has not responded to biologic therapy trials. Management should focus on optimizing standard care, minimizing OCS side-effects, and regular monitoring.
+                    </p>
+                 </div>
+             )}
+
             <AssessmentCard title="Severe Asthma Clinical Summary" icon={<FileText />} className="printable-card">
                 
                 {/* 1. Demographics & History */}
@@ -164,10 +192,21 @@ const Stage11_SummaryReport: React.FC = () => {
 
             </AssessmentCard>
 
-            <div className="mt-8 text-center no-print pb-8">
-                <Button onClick={handlePrint} variant="primary" size="lg" leftIcon={<Printer />}>
-                    Print Full Clinical Report
+            <div className="mt-8 flex flex-col sm:flex-row justify-center gap-4 no-print pb-8">
+                <Button onClick={handlePrint} variant="secondary" size="lg" leftIcon={<Printer />}>
+                    Print Report
                 </Button>
+                {patientData.activePatientId && (
+                    <Button 
+                        onClick={handleSaveAndExit} 
+                        variant="success" 
+                        size="lg" 
+                        leftIcon={<Save />}
+                        className="bg-emerald-700 hover:bg-emerald-800 shadow-lg"
+                    >
+                        Save & Return to Dashboard
+                    </Button>
+                )}
             </div>
         </div>
     );

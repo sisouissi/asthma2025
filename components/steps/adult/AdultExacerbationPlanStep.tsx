@@ -1,17 +1,17 @@
-
-
 import React from 'react';
 import Card from '../../ui/Card';
 import Button from '../../ui/Button';
 import { useNavigation } from '../../../contexts/NavigationContext';
 import { usePatientData } from '../../../contexts/PatientDataContext';
+import { usePatientRecords } from '../../../contexts/PatientRecordsContext';
 import { exacerbationPlanDetails } from '../../../constants/treatmentData';
-import { AlertTriangle, ChevronRight, FileText, RotateCcw, Activity, ShieldAlert, Monitor, HeartPulse, Info, ClipboardList } from 'lucide-react';
+import { AlertTriangle, ChevronRight, FileText, Activity, ShieldAlert, Monitor, HeartPulse, Info, ClipboardList, Printer, Save } from '../../../constants/icons';
 import DetailSection from '../../common/DetailSection';
 
 const AdultExacerbationPlanStep: React.FC = () => {
-  const { navigateTo, resetNavigation } = useNavigation();
+  const { navigateTo } = useNavigation();
   const { patientData } = usePatientData();
+  const { saveConsultation, updateConsultation } = usePatientRecords();
   const { exacerbationSeverity } = patientData;
 
   if (!exacerbationSeverity) {
@@ -35,13 +35,29 @@ const AdultExacerbationPlanStep: React.FC = () => {
   const cardIcon = isMildModerate ? <Activity className="text-amber-600" /> : <ShieldAlert className="text-red-600" />;
   const cardBorderClass = isMildModerate ? "border-amber-400" : "border-red-400";
   const cardBgClass = isMildModerate ? "bg-amber-50" : "bg-red-50";
+
+  const handlePrint = () => {
+      window.print();
+  };
+
+  const handleSave = () => {
+      if (patientData.activePatientId) {
+        if (patientData.activeConsultationId) {
+            updateConsultation(patientData.activePatientId, patientData.activeConsultationId, patientData);
+        } else {
+            saveConsultation(patientData.activePatientId, patientData);
+        }
+        // Redirect back to the Treatment Plan to continue the consultation flow
+        navigateTo('ADULT_TREATMENT_PLAN_STEP');
+      }
+  };
   
 
   return (
     <Card 
         title={plan.title} 
         icon={cardIcon}
-        className={`${cardBgClass} ${cardBorderClass}`}
+        className={`${cardBgClass} ${cardBorderClass} printable-card`}
     >
       {('steps' in plan) && plan.steps && (
         <DetailSection title="Key Management Steps" icon={<ClipboardList className="text-slate-600"/>}>
@@ -50,7 +66,7 @@ const AdultExacerbationPlanStep: React.FC = () => {
           </ul>
         </DetailSection>
       )}
-
+      
       {('keyTreatments' in plan) && plan.keyTreatments && (
          <DetailSection title="Key Emergency Treatments" icon={<HeartPulse className="text-slate-600"/>}>
           <ul className="list-disc list-inside space-y-1">
@@ -86,43 +102,41 @@ const AdultExacerbationPlanStep: React.FC = () => {
         </div>
       )}
 
-      <div className="mt-8 pt-6 border-t border-slate-300">
-        <div className="p-4 bg-slate-100 rounded-lg border border-slate-200">
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-500 mb-3 flex items-center">
-                <ClipboardList size={18} className="mr-2.5" />
-                Post-Exacerbation Follow-up
-            </h3>
-            <p className="text-sm text-slate-600 mb-3">
-                An asthma exacerbation is a failure of chronic management and signals an increased risk of future attacks. An urgent follow-up review is essential.
-            </p>
-            <p className="text-sm font-semibold text-slate-700">The goals of this review are to:</p>
-            <ul className="list-disc list-inside space-y-1 text-sm text-slate-600 mt-2 pl-4">
-                <li>Identify and address modifiable risk factors (e.g., adherence, inhaler technique, triggers).</li>
-                <li>Review and adjust the patient's ongoing controller treatment.</li>
-                <li>Assess if specialist referral is required for severe asthma management.</li>
-            </ul>
-        </div>
-      </div>
+      <div className="mt-8 pt-6 border-t border-slate-300 no-print">
+         <div className="flex flex-col gap-3">
+            <div className="flex gap-3">
+                <Button 
+                    onClick={handlePrint}
+                    variant="secondary"
+                    fullWidth
+                    size="lg"
+                    leftIcon={<Printer />}
+                >
+                    Print Action Plan
+                </Button>
+                 {patientData.activePatientId && (
+                    <Button 
+                        onClick={handleSave}
+                        variant="danger"
+                        fullWidth
+                        size="lg"
+                        leftIcon={<Save />}
+                    >
+                        Save Exacerbation Record
+                    </Button>
+                )}
+            </div>
 
-      <div className="mt-6 space-y-3">
-        <Button 
-            onClick={() => navigateTo('ADULT_TREATMENT_PLAN_STEP')}
-            variant="primary"
-            fullWidth
-            size="lg"
-            leftIcon={<FileText />}
-        >
-            Return to Treatment Plan
-        </Button>
-        <Button 
-            onClick={() => resetNavigation()}
-            variant="secondary"
-            fullWidth
-            size="lg"
-            leftIcon={<RotateCcw />}
-        >
-            Start New Assessment
-        </Button>
+            <Button 
+                onClick={() => navigateTo('ADULT_TREATMENT_PLAN_STEP')}
+                variant="primary"
+                fullWidth
+                size="lg"
+                leftIcon={<FileText />}
+            >
+                Return to Treatment Plan
+            </Button>
+         </div>
       </div>
     </Card>
   );

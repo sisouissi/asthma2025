@@ -9,6 +9,7 @@ import { ControlLevel, ControlAnswers } from '../../../types';
 import { ChevronRight, ListChecks, Baby } from 'lucide-react';
 import CACTModalContent from '../../common/modal_content/cACTModalContent';
 import FollowUpContext from '../../common/FollowUpContext';
+import ManagementCycleWidget from '../../common/ManagementCycleWidget';
 
 interface ControlQuestion {
   id: keyof ControlAnswers;
@@ -75,6 +76,7 @@ const YoungChildControlAssessmentStep: React.FC = () => {
 
   return (
     <Card title="Asthma Control Assessment (Child ≤5 years)" icon={<Baby className="text-violet-600" />}>
+      <ManagementCycleWidget ageGroup="youngChild" />
       <FollowUpContext />
       <p className="mb-1 text-sm text-slate-600">
         Based on parent/caregiver report for the <strong>past 4 weeks</strong>, assess the level of symptom control (based on GINA 2025, Box 11-1).

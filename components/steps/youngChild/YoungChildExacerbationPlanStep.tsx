@@ -1,17 +1,17 @@
-
-
 import React from 'react';
 import Card from '../../ui/Card';
 import Button from '../../ui/Button';
 import { useNavigation } from '../../../contexts/NavigationContext';
 import { usePatientData } from '../../../contexts/PatientDataContext';
+import { usePatientRecords } from '../../../contexts/PatientRecordsContext';
 import { exacerbationPlanDetails } from '../../../constants/treatmentData';
-import { AlertTriangle, ChevronRight, FileText, Baby, RotateCcw, ShieldAlert, Info, ClipboardList, HeartPulse, Monitor } from 'lucide-react';
+import { AlertTriangle, ChevronRight, FileText, Baby, RotateCcw, ShieldAlert, Info, ClipboardList, HeartPulse, Monitor, Printer, Save, Activity } from '../../../constants/icons';
 import DetailSection from '../../common/DetailSection';
 
 const YoungChildExacerbationPlanStep: React.FC = () => {
-  const { navigateTo, resetNavigation } = useNavigation();
+  const { navigateTo } = useNavigation();
   const { patientData } = usePatientData();
+  const { saveConsultation, updateConsultation } = usePatientRecords();
   const { exacerbationSeverity } = patientData;
 
   if (!exacerbationSeverity) {
@@ -34,13 +34,29 @@ const YoungChildExacerbationPlanStep: React.FC = () => {
   const cardBorderClass = isMildModerate ? "border-amber-400" : "border-red-400";
   const cardBgClass = isMildModerate ? "bg-amber-50" : "bg-red-50";
   
+  const handlePrint = () => {
+      window.print();
+  };
+
+  const handleSave = () => {
+      if (patientData.activePatientId) {
+        if (patientData.activeConsultationId) {
+            updateConsultation(patientData.activePatientId, patientData.activeConsultationId, patientData);
+        } else {
+            saveConsultation(patientData.activePatientId, patientData);
+        }
+        // Redirect back to Treatment Plan
+        navigateTo('YOUNG_CHILD_TREATMENT_PLAN_STEP');
+      }
+  };
 
   return (
     <Card 
         title={plan.title} 
         icon={cardIcon}
-        className={`${cardBgClass} ${cardBorderClass}`}
+        className={`${cardBgClass} ${cardBorderClass} printable-card`}
     >
+       {/* ... Content sections ... */}
       {('steps' in plan) && plan.steps && (
         <DetailSection title="Key Management Steps" icon={<ClipboardList className="text-slate-600" />}>
           <ul className="list-decimal list-inside space-y-2">
@@ -87,44 +103,40 @@ const YoungChildExacerbationPlanStep: React.FC = () => {
             <strong>Crucial:</strong> Always use a pMDI with an appropriate valved holding chamber and facemask for children ≤5 years. Ensure parents are proficient in its use.
         </p>
 
-      <div className="mt-8 pt-6 border-t border-slate-300">
-        <div className="p-4 bg-slate-100 rounded-lg border border-slate-200">
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-500 mb-3 flex items-center">
-                <ClipboardList size={18} className="mr-2.5" />
-                Post-Episode Follow-up
-            </h3>
-            <p className="text-sm text-slate-600 mb-3">
-                Any wheezing episode requiring urgent care is a significant event. A follow-up review with the child and their carers is essential.
-            </p>
-            <p className="text-sm font-semibold text-slate-700">The goals of this review are to:</p>
-            <ul className="list-disc list-inside space-y-1 text-sm text-slate-600 mt-2 pl-4">
-                <li>Review potential triggers and environmental factors.</li>
-                <li>Confirm correct inhaler and spacer/facemask technique.</li>
-                <li>Review the controller treatment plan and assess the need for initiation or step-up.</li>
-                <li>Ensure the parents have and understand a written action plan.</li>
-            </ul>
-        </div>
-      </div>
-
-      <div className="mt-6 space-y-3">
-        <Button 
-            onClick={() => navigateTo('YOUNG_CHILD_TREATMENT_PLAN_STEP')}
-            variant="violet"
-            fullWidth
-            size="lg"
-            leftIcon={<FileText />}
-        >
-            Return to Treatment Plan
-        </Button>
-        <Button 
-            onClick={() => resetNavigation()}
-            variant="secondary"
-            fullWidth
-            size="lg"
-            leftIcon={<RotateCcw />}
-        >
-            Start New Patient Assessment
-        </Button>
+      <div className="mt-8 pt-6 border-t border-slate-300 no-print">
+          <div className="flex flex-col gap-3">
+            <div className="flex gap-3">
+                <Button 
+                    onClick={handlePrint}
+                    variant="secondary"
+                    fullWidth
+                    size="lg"
+                    leftIcon={<Printer />}
+                >
+                    Print Action Plan
+                </Button>
+                 {patientData.activePatientId && (
+                    <Button 
+                        onClick={handleSave}
+                        variant="danger"
+                        fullWidth
+                        size="lg"
+                        leftIcon={<Save />}
+                    >
+                        Save Exacerbation Record
+                    </Button>
+                )}
+            </div>
+            <Button 
+                onClick={() => navigateTo('YOUNG_CHILD_TREATMENT_PLAN_STEP')}
+                variant="violet"
+                fullWidth
+                size="lg"
+                leftIcon={<FileText />}
+            >
+                Return to Treatment Plan
+            </Button>
+         </div>
       </div>
     </Card>
   );

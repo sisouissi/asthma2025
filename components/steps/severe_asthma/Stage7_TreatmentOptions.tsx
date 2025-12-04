@@ -1,10 +1,9 @@
-
 import React, { useMemo, useCallback } from 'react';
 import { usePatientData } from '../../../contexts/PatientDataContext';
 import { useNavigation } from '../../../contexts/NavigationContext';
 import AssessmentCard from './AssessmentCard';
 import Button from '../../ui/Button';
-import { Droplets, TestTubeDiagonal, ShieldCheck, TrendingUp, HelpCircle, ChevronRight, ArrowRight } from '../../../constants/icons';
+import { Droplets, TestTubeDiagonal, ShieldCheck, TrendingUp, HelpCircle, ChevronRight, ArrowRight, CheckCircle2 } from '../../../constants/icons';
 import { getBiologicRecommendation } from '../../../constants/severeAsthmaData';
 
 const RecommendationItem: React.FC<{ title: string; children: React.ReactNode; }> = ({ title, children }) => (
@@ -14,7 +13,7 @@ const RecommendationItem: React.FC<{ title: string; children: React.ReactNode; }
     </div>
 );
 
-const RecommendationCard: React.FC<{ rec: any, rank: number }> = ({ rec, rank }) => {
+const RecommendationCard: React.FC<{ rec: any, rank: number, onSelect: (drug: string) => void, isSelected: boolean }> = ({ rec, rank, onSelect, isSelected }) => {
     const colors = {
         0: { border: 'border-emerald-500', bg: 'bg-emerald-50', text: 'text-emerald-800', bar: 'bg-emerald-500' },
         1: { border: 'border-sky-500', bg: 'bg-sky-50', text: 'text-sky-800', bar: 'bg-sky-500' },
@@ -22,9 +21,18 @@ const RecommendationCard: React.FC<{ rec: any, rank: number }> = ({ rec, rank })
     };
     const medals = ['🥇', '🥈', '🥉'];
     const style = colors[rank as keyof typeof colors] || colors[2];
+    
+    const containerClass = isSelected 
+        ? `border-4 ${style.border.replace('border', 'border-indigo')} bg-white shadow-xl transform scale-105 z-10` 
+        : `border-2 ${style.border} ${style.bg} shadow-md hover:shadow-lg`;
 
     return (
-        <div className={`border-2 rounded-xl p-4 ${style.border} ${style.bg} shadow-md`}>
+        <div className={`rounded-xl p-4 transition-all duration-200 relative ${containerClass}`}>
+            {isSelected && (
+                <div className="absolute -top-3 -right-3 bg-indigo-600 text-white rounded-full p-1 shadow-md">
+                    <CheckCircle2 size={24} />
+                </div>
+            )}
             <div className="flex items-start justify-between mb-3">
                 <div>
                     <h4 className={`font-bold text-xl ${style.text}`}>{medals[rank]} {rec.drug}</h4>
@@ -37,6 +45,17 @@ const RecommendationCard: React.FC<{ rec: any, rank: number }> = ({ rec, rank })
                 <p><strong>Eligibility:</strong> {rec.eligibility}</p>
             </div>
             <div className="mt-3"><div className="w-full bg-slate-200 rounded-full h-2.5"><div className={`h-2.5 rounded-full transition-all duration-300 ${style.bar}`} style={{ width: `${rec.score}%` }}></div></div></div>
+            
+            <div className="mt-4 pt-3 border-t border-slate-200/50">
+                <Button 
+                    onClick={() => onSelect(rec.drug)} 
+                    variant={isSelected ? "primary" : "secondary"} 
+                    fullWidth 
+                    size="sm"
+                >
+                    {isSelected ? "Selected for Trial" : "Select this Therapy"}
+                </Button>
+            </div>
         </div>
     );
 };
@@ -46,6 +65,7 @@ const Stage7_TreatmentOptions: React.FC = () => {
     const { navigateTo } = useNavigation();
     const { type2Inflammation, eligibleForBiologics } = patientData.severeAsthmaAssessment;
     const { biologicsAvailable } = patientData.severeAsthma.medications;
+    const { selectedBiologic } = patientData.severeAsthma;
     const recommendations = useMemo(() => getBiologicRecommendation(patientData), [patientData]);
 
      const handleBiologicsAvailableChange = useCallback((value: 'yes' | 'no') => {
@@ -62,20 +82,37 @@ const Stage7_TreatmentOptions: React.FC = () => {
         updatePatientData(updates);
     }, [patientData, updatePatientData]);
 
+    const handleSelectBiologic = (drugName: string) => {
+        updatePatientData({
+            severeAsthma: {
+                ...patientData.severeAsthma,
+                selectedBiologic: drugName
+            }
+        });
+    };
+
 
     const renderType2HighContent = () => (
         <>
             <AssessmentCard title="Phenotype: Type 2-High Severe Asthma" icon={<Droplets className="text-teal-600" />}>
                 {eligibleForBiologics && recommendations && recommendations.length > 0 ? (
                      <div className="space-y-4">
-                        <p className="text-sm text-slate-600">Based on the patient's data, the following biologic therapies are recommended, ranked by suitability score:</p>
-                        {recommendations.slice(0, 3).map((rec, index) => <RecommendationCard key={index} rec={rec} rank={index} />)}
+                        <p className="text-sm text-slate-600">Based on the patient's data, the following biologic therapies are recommended. Select one to proceed with a prescription.</p>
+                        {recommendations.slice(0, 3).map((rec, index) => (
+                            <RecommendationCard 
+                                key={index} 
+                                rec={rec} 
+                                rank={index} 
+                                onSelect={handleSelectBiologic}
+                                isSelected={selectedBiologic === rec.drug}
+                            />
+                        ))}
                     </div>
                 ) : (
                     <div className="text-center p-4 bg-amber-50 rounded-lg">
                         <h4 className="font-semibold text-amber-800 mb-2 text-md">Biologic Therapy Not Indicated</h4>
                         <p className="text-sm text-amber-700">
-                            Although Type 2 inflammation is present, the patient does not currently meet the full GINA criteria for severe asthma requiring biologic therapy (e.g., uncontrolled despite optimized therapy). Please review Stages 1-4.
+                            Although Type 2 inflammation is present, the patient does not currently meet the full GINA criteria for severe asthma requiring biologic therapy.
                         </p>
                     </div>
                 )}
@@ -101,7 +138,17 @@ const Stage7_TreatmentOptions: React.FC = () => {
             
             {biologicsAvailable === 'yes' && eligibleForBiologics && (
                 <div className="mt-4 text-center p-4 bg-slate-50 border rounded-lg">
-                    <Button onClick={() => navigateTo('SEVERE_ASTHMA_STAGE_8')} size="lg" rightIcon={<ChevronRight/>}>Proceed to Biologic Therapy Details (Stage 8)</Button>
+                    <p className="text-sm text-slate-600 mb-3">
+                        {selectedBiologic ? `Selected: ${selectedBiologic}` : "Please select a biologic therapy from the list above."}
+                    </p>
+                    <Button 
+                        onClick={() => navigateTo('SEVERE_ASTHMA_STAGE_8')} 
+                        size="lg" 
+                        rightIcon={<ChevronRight/>}
+                        disabled={!selectedBiologic}
+                    >
+                        Proceed to Prescription (Stage 8)
+                    </Button>
                 </div>
             )}
             
@@ -109,14 +156,12 @@ const Stage7_TreatmentOptions: React.FC = () => {
                 <AssessmentCard title="Alternative Treatment (Biologics Not Available)" icon={<TrendingUp className="text-amber-600"/>}>
                     <p className="text-sm text-slate-600 mb-3">According to GINA (p.152, Section 7.3), if Type 2-targeted biologic therapy is not available/affordable, consider the following options:</p>
                     <ul className="list-disc list-inside space-y-2 text-sm text-slate-700">
-                        <li>Consider higher dose ICS-LABA, if not used.</li>
-                        <li>Consider other add-on therapy, e.g., LAMA, LTRA, low-dose azithromycin, if not already used.</li>
-                        <li>As last resort, consider add-on low-dose OCS, but implement strategies to minimize side-effects.</li>
-                        <li>Stop ineffective add-on therapies.</li>
-                        <li>Continue to optimize treatment, including inhaler technique, adherence, non-pharmacologic strategies and treating comorbidities.</li>
+                        <li>Consider higher dose ICS-LABA.</li>
+                        <li>Consider other add-on therapy (LAMA, LTRA, low-dose azithromycin).</li>
+                        <li>As last resort, consider add-on low-dose OCS (monitor side-effects).</li>
                     </ul>
                     <div className="mt-6 flex flex-col sm:flex-row justify-center items-center gap-4 border-t border-slate-200 pt-4">
-                        <Button onClick={() => navigateTo('SEVERE_ASTHMA_STAGE_3')} variant="secondary" leftIcon={<ArrowRight className="transform -rotate-180"/>}>Return to Optimize Management (Stage 3)</Button>
+                        <Button onClick={() => navigateTo('SEVERE_ASTHMA_STAGE_3')} variant="secondary" leftIcon={<ArrowRight className="transform -rotate-180"/>}>Return to Optimization</Button>
                         <Button onClick={() => navigateTo('SEVERE_ASTHMA_STAGE_10')} variant="primary" rightIcon={<ArrowRight/>}>Proceed to Ongoing Care (Stage 10)</Button>
                     </div>
                 </AssessmentCard>
@@ -127,25 +172,19 @@ const Stage7_TreatmentOptions: React.FC = () => {
     const renderLowType2Content = () => (
         <>
             <AssessmentCard title="Phenotype: Severe Asthma with Low Type 2 Biomarkers" icon={<TestTubeDiagonal className="text-slate-600" />}>
-                <p className="mb-4 text-sm text-slate-600">
-                    The patient does not show evidence of persistent Type 2 inflammation. Treatment options are limited and should be managed by a specialist (GINA p.151, Section 7.1).
-                </p>
                 <div className="space-y-4">
-                    <RecommendationItem title="Review the Basics">
+                     <RecommendationItem title="Review the Basics">
                          <div className="flex items-center">
                             <ShieldCheck size={16} className="text-sky-600 mr-2 flex-shrink-0" />
-                            <span>Re-confirm the diagnosis, inhaler technique, adherence, and management of comorbidities and side-effects.</span>
+                            <span>Re-confirm the diagnosis, inhaler technique, adherence, and management of comorbidities.</span>
                         </div>
                     </RecommendationItem>
                      <RecommendationItem title="Consider Trial of Add-on Treatments">
                          <ul className="list-disc list-inside space-y-1">
-                            <li><strong>LAMA:</strong> Add-on Long-Acting Muscarinic Antagonist (e.g., tiotropium) if not already trialed.</li>
-                            <li><strong>Low-dose Azithromycin:</strong> May reduce exacerbations. Screen for contraindications (QTc prolongation, atypical mycobacteria).</li>
-                            <li><strong>Tezepelumab (Anti-TSLP):</strong> A biologic effective across phenotypes, including low T2. Consider if other options fail.</li>
+                            <li><strong>LAMA:</strong> Add-on tiotropium.</li>
+                            <li><strong>Low-dose Azithromycin:</strong> Screen for contraindications (QTc, mycobacteria).</li>
+                            <li><strong>Tezepelumab (Anti-TSLP):</strong> Effective across phenotypes.</li>
                         </ul>
-                    </RecommendationItem>
-                    <RecommendationItem title="Last Resort: Low-dose OCS">
-                        Use the lowest possible dose to maintain control, with strategies to mitigate side-effects.
                     </RecommendationItem>
                 </div>
             </AssessmentCard>

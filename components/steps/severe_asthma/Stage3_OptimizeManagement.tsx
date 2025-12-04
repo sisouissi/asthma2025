@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigation } from '../../../contexts/NavigationContext';
 import { usePatientData } from '../../../contexts/PatientDataContext';
@@ -75,11 +74,13 @@ const Stage3_OptimizeManagement: React.FC = () => {
 
   const handleSaveAndStartTrial = () => {
       // 1. Update Patient Data with Plan and Status
+      // CRITICAL: Ensure we are spreading the existing severeAsthma object correctly
+      // so data from Stage 1 (Basic Info, Symptoms) and Stage 2 (Risk Factors) is preserved.
       const updatedData = {
           ...patientData,
           severeAsthma: {
-              ...patientData.severeAsthma,
-              status: 'optimizing' as const, // Explicit type cast
+              ...patientData.severeAsthma, // Preserves basicInfo, symptoms, medications, biomarkers, comorbidities, riskFactors
+              status: 'optimizing' as const, 
               optimizationPlan: {
                   dateInitiated: new Date().toISOString(),
                   interventions: selectedInterventions,

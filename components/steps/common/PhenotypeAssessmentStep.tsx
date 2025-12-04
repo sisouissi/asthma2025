@@ -1,4 +1,3 @@
-
 import React, { useEffect, useMemo } from 'react';
 import { useNavigation } from '../../../contexts/NavigationContext';
 import { usePatientData } from '../../../contexts/PatientDataContext';
@@ -40,39 +39,42 @@ const PhenotypeAssessmentStep: React.FC = () => {
         });
     };
 
-    // Logic to infer phenotype
-    const suggestedPhenotype = useMemo(() => {
+    // Logic to infer ALL applicable phenotypes
+    const suggestedPhenotypes = useMemo(() => {
         const { allergicHistory, familyHistory, childhoodOnset, coughVariant, obesity, worseAtWork, persistentLimitation } = phenotypeData;
+        const phenotypes: string[] = [];
         
-        if (coughVariant) return "Cough Variant Asthma";
-        if (persistentLimitation) return "Asthma with Persistent Airflow Limitation";
-        if (obesity) return "Asthma with Obesity";
-        if (worseAtWork && ageGroup === 'adult') return "Occupational / Work-Exacerbated Asthma";
+        if (allergicHistory || familyHistory || childhoodOnset) {
+            phenotypes.push("Allergic Asthma");
+        } else if (ageGroup === 'adult') {
+            phenotypes.push("Adult-onset (Non-allergic) Asthma");
+        }
+
+        if (coughVariant) phenotypes.push("Cough Variant Asthma");
+        if (persistentLimitation) phenotypes.push("Asthma with Persistent Airflow Limitation");
+        if (obesity) phenotypes.push("Asthma with Obesity");
+        if (worseAtWork && ageGroup === 'adult') phenotypes.push("Occupational / Work-Exacerbated Asthma");
         
-        if (allergicHistory || familyHistory || childhoodOnset) return "Allergic Asthma";
+        if (phenotypes.length === 0) return ["Classic Asthma (Unspecified)"];
         
-        if (!childhoodOnset && !allergicHistory && ageGroup === 'adult') return "Adult-onset (Non-allergic) Asthma";
-        
-        return "Classic Asthma (Unspecified)";
+        return phenotypes;
     }, [phenotypeData, ageGroup]);
 
     const handleContinue = () => {
-        // Save the inferred phenotype
+        // Save the inferred phenotypes as a joined string for the summary
         updatePatientData({
             phenotypeData: {
                 ...phenotypeData,
-                identifiedPhenotype: suggestedPhenotype
+                identifiedPhenotype: suggestedPhenotypes.join(", ")
             }
         });
 
         // Navigate based on age group
         if (ageGroup === 'adult') {
-            // Navigate to Baseline ACT before Symptom Frequency for Adults
             navigateTo('ADULT_BASELINE_ACT_STEP');
         } else if (ageGroup === 'child') {
             navigateTo('CHILD_INITIAL_ASSESSMENT_STEP');
         } else {
-            // Fallback, though YoungChild usually skips this
             navigateTo('YOUNG_CHILD_SYMPTOM_PATTERN_STEP');
         }
     };
@@ -92,7 +94,7 @@ const PhenotypeAssessmentStep: React.FC = () => {
     return (
         <Card title="Clinical Phenotype Assessment" icon={<Users className="text-indigo-600" />}>
             <p className="mb-6 text-sm text-slate-600">
-                Recognizing clinical phenotypes can help tailor management strategies (GINA 2025, Box 1-2). Answer the following to identify the most likely phenotype.
+                Recognizing clinical phenotypes can help tailor management strategies (GINA 2025, Box 1-2). Answer the following to identify likely phenotypes.
             </p>
 
             <div className="space-y-6">
@@ -123,11 +125,16 @@ const PhenotypeAssessmentStep: React.FC = () => {
             </div>
 
             <div className="mt-8 p-4 bg-indigo-50 border-l-4 border-indigo-500 rounded-r-lg">
-                <h4 className="font-semibold text-indigo-900 flex items-center">
+                <h4 className="font-semibold text-indigo-900 flex items-center mb-2">
                     <ClipboardList size={20} className="mr-2"/>
-                    Likely Phenotype: {suggestedPhenotype}
+                    Likely Phenotype(s):
                 </h4>
-                <p className="text-xs text-indigo-700 mt-1">
+                <ul className="list-disc list-inside text-sm text-indigo-800 space-y-1 pl-2">
+                    {suggestedPhenotypes.map((p, idx) => (
+                        <li key={idx} className="font-medium">{p}</li>
+                    ))}
+                </ul>
+                <p className="text-xs text-indigo-600 mt-3 italic">
                     Based on the provided responses. This helps guide treatment choices (e.g., responsiveness to ICS).
                 </p>
             </div>
