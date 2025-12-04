@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { usePatientRecords } from '../../contexts/PatientRecordsContext';
 import { useNavigation } from '../../contexts/NavigationContext';
 import { usePatientData } from '../../contexts/PatientDataContext';
@@ -7,16 +6,17 @@ import { useUIState } from '../../contexts/UIStateContext';
 import { PatientProfile } from '../../types';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
-import { User, PlusCircle, Search, FileText, ChevronRight, Calendar, Trash2, ArrowRight, Users, ChevronLeft, Bell, Lock, Unlock, Key, ShieldCheck } from '../../constants/icons';
+import { User, PlusCircle, Search, FileText, ChevronRight, Calendar, Trash2, ArrowRight, Users, ChevronLeft, Bell, Lock, Unlock, Key, ShieldCheck, Zap, Activity } from '../../constants/icons';
 import { StepId, AgeGroup } from '../../types';
 
 interface PatientListItemProps {
     patient: PatientProfile;
     onSelect: (id: string) => void;
     onDelete: (id: string, e: React.MouseEvent) => void;
+    annualExacerbations: number;
 }
 
-const PatientListItem: React.FC<PatientListItemProps> = ({ patient, onSelect, onDelete }) => (
+const PatientListItem: React.FC<PatientListItemProps> = ({ patient, onSelect, onDelete, annualExacerbations }) => (
     <div 
         onClick={() => onSelect(patient.id)}
         className="p-4 border border-slate-200 rounded-lg hover:shadow-md cursor-pointer bg-white transition-all flex justify-between items-center group"
@@ -35,6 +35,12 @@ const PatientListItem: React.FC<PatientListItemProps> = ({ patient, onSelect, on
             </div>
         </div>
         <div className="flex items-center gap-4">
+             {annualExacerbations > 0 && (
+                <div className="flex items-center bg-red-50 text-red-700 px-2 py-1 rounded-full text-xs font-medium border border-red-100" title="Exacerbations recorded in the last 12 months">
+                    <Zap size={12} className="mr-1 fill-red-600"/>
+                    {annualExacerbations} Exac. (1y)
+                </div>
+            )}
             <div className="text-right hidden sm:block">
                 <p className="text-xs text-indigo-600 font-medium bg-indigo-50 px-2 py-1 rounded-full">
                     {patient.consultations.length} Consultations
@@ -63,6 +69,7 @@ const PatientDashboard: React.FC = () => {
     const [pinInput, setPinInput] = useState('');
     const [confirmPinInput, setConfirmPinInput] = useState('');
     const [authError, setAuthError] = useState('');
+    const pinInputRef = useRef<HTMLInputElement>(null);
 
     // Views: List (Tabs), Create Form, Details
     const [view, setView] = useState<'list' | 'create' | 'details'>('list');
@@ -75,6 +82,15 @@ const PatientDashboard: React.FC = () => {
     // Pagination State
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
+
+    // Form State
+    const [formData, setFormData] = useState({
+        lastName: '',
+        firstName: '',
+        dateOfBirth: '',
+        fileNumber: '',
+        treatingPhysician: ''
+    });
 
     // Sync with global context
     useEffect(() => {
@@ -89,44 +105,7 @@ const PatientDashboard: React.FC = () => {
         setCurrentPage(1);
     }, [searchTerm]);
 
-    // Form State
-    const [formData, setFormData] = useState({
-        lastName: '',
-        firstName: '',
-        dateOfBirth: '',
-        fileNumber: '',
-        treatingPhysician: ''
-    });
-
     const selectedPatient = patients.find(p => p.id === selectedPatientId);
-
-    // --- Auth Handlers ---
-
-    const handlePinSetup = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (pinInput.length < 4) {
-            setAuthError("PIN must be at least 4 digits.");
-            return;
-        }
-        if (pinInput !== confirmPinInput) {
-            setAuthError("PINs do not match.");
-            return;
-        }
-        setAppPin(pinInput); // Set in global context
-        setAuthError('');
-    };
-
-    const handleUnlock = (e: React.FormEvent) => {
-        e.preventDefault();
-        const storedPin = localStorage.getItem('gina_app_pin');
-        if (pinInput === storedPin) {
-            authenticate(); // Set global authenticated state
-            setAuthError('');
-        } else {
-            setAuthError("Incorrect PIN.");
-            setPinInput('');
-        }
-    };
 
     // --- Helper Functions ---
 
@@ -151,6 +130,19 @@ const PatientDashboard: React.FC = () => {
         return latestData.adult_reviewReminderDate || 
                latestData.child_reviewReminderDate || 
                latestData.youngChild_reviewReminderDate || null;
+    };
+
+    // Helper: Calculate annual exacerbations
+    const getAnnualExacerbations = (patient: PatientProfile): number => {
+        if (!patient.consultations) return 0;
+        const oneYearAgo = new Date();
+        oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+
+        return patient.consultations.filter(c => {
+            const date = new Date(c.date);
+            // Check if within last year AND has recorded exacerbation severity
+            return date >= oneYearAgo && c.data.exacerbationSeverity != null;
+        }).length;
     };
 
     // --- Filtering & Pagination Logic ---
@@ -185,20 +177,78 @@ const PatientDashboard: React.FC = () => {
 
     // --- Actions ---
 
+    const handlePinSetup = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (pinInput.length < 4) {
+            setAuthError("PIN must be at least 4 digits.");
+            return;
+        }
+        if (pinInput !== confirmPinInput) {
+            setAuthError("PINs do not match.");
+            return;
+        }
+        setAppPin(pinInput); // Set in global context
+        setAuthError('');
+    };
+
+    const handleUnlock = (e: React.FormEvent) => {
+        e.preventDefault();
+        const storedPin = localStorage.getItem('gina_app_pin');
+        if (pinInput === storedPin) {
+            authenticate(); // Set global authenticated state
+            setAuthError('');
+        } else {
+            setAuthError("Incorrect PIN.");
+            setPinInput('');
+        }
+    };
+
+    const handlePinChange = (val: string) => {
+         if (!/^\d*$/.test(val)) return;
+         setPinInput(val);
+    };
+    
+    const handleConfirmChange = (val: string) => {
+         if (!/^\d*$/.test(val)) return;
+         setConfirmPinInput(val);
+    };
+    
+    // Auto-submit unlock when 4 digits are entered
+    useEffect(() => {
+        if (hasPin && pinInput.length === 4) {
+             const storedPin = localStorage.getItem('gina_app_pin');
+             if (pinInput === storedPin) {
+                 authenticate();
+                 setAuthError('');
+             } else {
+                 setAuthError("Incorrect PIN.");
+                 setPinInput(''); 
+                 setTimeout(() => pinInputRef.current?.focus(), 100);
+             }
+        }
+    }, [pinInput, hasPin, authenticate]);
+
+    const handleSetupSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (pinInput.length < 4) {
+            setAuthError("PIN must be at least 4 digits.");
+            return;
+        }
+        if (pinInput !== confirmPinInput) {
+            setAuthError("PINs do not match.");
+            return;
+        }
+        setAppPin(pinInput);
+        setAuthError('');
+    };
+
     const handleCreateSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (!formData.lastName || !formData.firstName) return;
-        
-        // Generate random file number if empty: P-XXXXXX
         const finalFileNumber = formData.fileNumber.trim() || `P-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
-
-        addPatient({
-            ...formData,
-            fileNumber: finalFileNumber
-        });
+        addPatient({ ...formData, fileNumber: finalFileNumber });
         setFormData({ lastName: '', firstName: '', dateOfBirth: '', fileNumber: '', treatingPhysician: '' });
-        setView('list');
-        setActiveTab('all'); // Switch to all list to see new patient
+        setView('list'); setActiveTab('all');
     };
 
     const handleSelectPatient = (id: string) => {
@@ -256,11 +306,13 @@ const PatientDashboard: React.FC = () => {
 
             // --- SEVERE ASTHMA CHECK ---
             const severeStatus = lastConsultation.data.severeAsthma?.status;
+            // Explicitly include biologic_trial in active check
             const isSevereActive = severeStatus && severeStatus !== 'screening' && severeStatus !== 'rejected_severe';
 
             if (isSevereActive) {
                 updates.severeAsthma = lastConsultation.data.severeAsthma;
                 updates.severeAsthmaAssessment = lastConsultation.data.severeAsthmaAssessment;
+                // Force route to Severe Asthma entry point, Manager will handle internal routing based on status
                 nextStep = 'SEVERE_ASTHMA_STAGE_1'; 
             } else {
                 // --- STANDARD ASTHMA FOLLOW-UP ---
@@ -328,30 +380,28 @@ const PatientDashboard: React.FC = () => {
                 >
                     <div className="py-6">
                         {hasPin ? (
-                            <form onSubmit={handleUnlock} className="space-y-6">
-                                <p className="text-slate-600 mb-4">Please enter your security PIN to access patient records.</p>
+                            <div className="space-y-6">
+                                <p className="text-slate-600 mb-4">Enter your PIN to unlock.</p>
                                 <div>
                                     <input 
+                                        ref={pinInputRef}
                                         type="password" 
                                         inputMode="numeric"
+                                        maxLength={4}
                                         autoFocus
-                                        className="w-48 text-center text-3xl tracking-[0.5em] p-3 border-b-2 border-indigo-300 focus:border-indigo-600 focus:outline-none bg-transparent text-slate-800 font-bold placeholder-slate-300"
+                                        className="w-48 text-center text-4xl tracking-[0.5em] p-3 border-b-2 border-indigo-300 focus:border-indigo-600 focus:outline-none bg-transparent text-slate-800 font-bold placeholder-slate-300"
                                         value={pinInput}
-                                        onChange={(e) => setPinInput(e.target.value)}
+                                        onChange={(e) => handlePinChange(e.target.value)}
                                         placeholder="••••"
                                     />
                                 </div>
                                 {authError && <p className="text-red-500 text-sm font-medium animate-pulse">{authError}</p>}
-                                <div className="pt-2">
-                                    <Button type="submit" fullWidth variant="primary" size="lg" rightIcon={<Unlock size={20}/>}>
-                                        Unlock Dashboard
-                                    </Button>
-                                </div>
-                            </form>
+                                <p className="text-xs text-slate-400">Enter 4 digits to unlock automatically</p>
+                            </div>
                         ) : (
-                            <form onSubmit={handlePinSetup} className="space-y-6">
+                            <form onSubmit={handleSetupSubmit} className="space-y-6">
                                 <div className="bg-violet-50 p-3 rounded-lg text-sm text-violet-800 mb-4">
-                                    First-time access: Please create a secure PIN to protect patient data.
+                                    First-time access: Please create a secure 4-digit PIN.
                                 </div>
                                 <div className="space-y-4 text-left">
                                     <div>
@@ -359,9 +409,10 @@ const PatientDashboard: React.FC = () => {
                                         <input 
                                             type="password" 
                                             inputMode="numeric"
+                                            maxLength={4}
                                             className="w-full text-center text-2xl tracking-widest p-3 bg-slate-100 border border-slate-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:bg-white transition-all"
                                             value={pinInput}
-                                            onChange={(e) => setPinInput(e.target.value)}
+                                            onChange={(e) => handlePinChange(e.target.value)}
                                             placeholder="••••"
                                         />
                                     </div>
@@ -370,9 +421,10 @@ const PatientDashboard: React.FC = () => {
                                         <input 
                                             type="password" 
                                             inputMode="numeric"
+                                            maxLength={4}
                                             className="w-full text-center text-2xl tracking-widest p-3 bg-slate-100 border border-slate-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:bg-white transition-all"
                                             value={confirmPinInput}
-                                            onChange={(e) => setConfirmPinInput(e.target.value)}
+                                            onChange={(e) => handleConfirmChange(e.target.value)}
                                             placeholder="••••"
                                         />
                                     </div>
@@ -389,7 +441,7 @@ const PatientDashboard: React.FC = () => {
         );
     }
 
-    // --- Render Components ---
+    // --- Render Main ---
     const renderMainList = () => (
         <Card 
             title="Patient Directory" 
@@ -463,6 +515,7 @@ const PatientDashboard: React.FC = () => {
                                     patient={patient} 
                                     onSelect={handleSelectPatient}
                                     onDelete={handleDeletePatient}
+                                    annualExacerbations={getAnnualExacerbations(patient)}
                                 />
                             ))}
                         </div>
@@ -519,6 +572,7 @@ const PatientDashboard: React.FC = () => {
                                     patient={patient} 
                                     onSelect={handleSelectPatient}
                                     onDelete={handleDeletePatient}
+                                    annualExacerbations={getAnnualExacerbations(patient)}
                                 />
                             ))}
                         </div>
@@ -603,10 +657,10 @@ const PatientDashboard: React.FC = () => {
                                     <span className="font-medium">{selectedPatient?.consultations.length}</span>
                                 </div>
                                 <div className="flex justify-between">
-                                    <span className="text-slate-600">First Visit:</span>
-                                    <span className="font-medium">{selectedPatient?.consultations.length ? new Date(selectedPatient.consultations[selectedPatient.consultations.length - 1].date).toLocaleDateString() : 'N/A'}</span>
+                                    <span className="text-slate-600">Annual Exacerbations:</span>
+                                    <span className="font-bold text-red-600">{selectedPatient ? getAnnualExacerbations(selectedPatient) : 0}</span>
                                 </div>
-                                 <div className="flex justify-between">
+                                <div className="flex justify-between">
                                     <span className="text-slate-600">Last Visit:</span>
                                     <span className="font-medium">{selectedPatient?.consultations.length ? new Date(selectedPatient.consultations[0].date).toLocaleDateString() : 'N/A'}</span>
                                 </div>
@@ -624,26 +678,61 @@ const PatientDashboard: React.FC = () => {
                                 </div>
                             ) : (
                                 <div className="space-y-3">
-                                    {selectedPatient?.consultations.map(consult => (
-                                        <div key={consult.id} className="p-4 bg-white rounded-lg border border-slate-200 hover:shadow-md transition-shadow flex justify-between items-center">
-                                            <div>
-                                                <div className="flex items-center gap-3 mb-1">
-                                                    <span className="font-bold text-slate-800 text-lg">{new Date(consult.date).toLocaleDateString()}</span>
-                                                    <span className="text-xs text-slate-500 font-medium bg-slate-100 px-2 py-0.5 rounded-full">
-                                                        {new Date(consult.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                                                    </span>
+                                    {selectedPatient?.consultations.map(consult => {
+                                        const date = new Date(consult.date);
+                                        const type = consult.data.consultationType === 'initial' ? 'Initial Consultation' : 'Follow-up';
+                                        const severeStatus = consult.data.severeAsthma?.status;
+                                        
+                                        let diagnosisLabel = "";
+                                        if (severeStatus && severeStatus !== 'screening' && severeStatus !== 'rejected_severe') {
+                                            if (severeStatus === 'confirmed_severe' || severeStatus === 'biologic_trial') {
+                                                const drug = consult.data.severeAsthma.selectedBiologic ? consult.data.severeAsthma.selectedBiologic.split('(')[0].trim() : '';
+                                                diagnosisLabel = `Severe Asthma${drug ? ` (${drug})` : ''}`;
+                                            } else if (severeStatus === 'optimizing' || severeStatus === 'addressing_factors') {
+                                                diagnosisLabel = "Difficult-to-Treat Asthma (Evaluating)";
+                                            }
+                                        } else {
+                                            const step = consult.data.adult_currentGinaStep || consult.data.child_currentGinaStep || consult.data.youngChild_currentGinaStep;
+                                            diagnosisLabel = step ? `GINA Step ${step}` : 'Assessment';
+                                        }
+
+                                        return (
+                                            <div key={consult.id} className="p-4 bg-white rounded-lg border border-slate-200 hover:shadow-md transition-shadow flex justify-between items-center">
+                                                <div>
+                                                    <div className="flex items-center gap-3 mb-1">
+                                                        <span className="font-bold text-slate-800 text-lg">{date.toLocaleDateString()}</span>
+                                                        <span className="text-xs text-slate-500 font-medium bg-slate-100 px-2 py-0.5 rounded-full">
+                                                            {date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                                        </span>
+                                                        {consult.data.exacerbationSeverity && (
+                                                            <span className="flex items-center bg-red-100 text-red-700 text-xs font-bold px-2 py-0.5 rounded-full ml-2 border border-red-200">
+                                                                <Zap size={10} className="mr-1 fill-red-600"/>
+                                                                {consult.data.exacerbationSeverity === 'severe' ? 'Severe Exac.' : 'Mild/Mod Exac.'}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    
+                                                    <div className="flex flex-col gap-1">
+                                                        <div className="flex items-center gap-2 text-sm text-slate-600">
+                                                            <span className={`px-2 py-0.5 rounded text-xs font-semibold ${consult.data.consultationType === 'initial' ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'}`}>
+                                                                {type}
+                                                            </span>
+                                                            <span>•</span>
+                                                            <span>{consult.data.ageGroup ? consult.data.ageGroup.charAt(0).toUpperCase() + consult.data.ageGroup.slice(1) : 'Unknown Group'}</span>
+                                                        </div>
+                                                        
+                                                        {/* Diagnosis Info */}
+                                                        <div className="flex items-center gap-3 text-xs mt-1">
+                                                             <span className="font-medium text-indigo-700 bg-indigo-50 px-2 py-1 rounded border border-indigo-100">
+                                                                {diagnosisLabel}
+                                                             </span>
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                                <div className="flex items-center gap-2 text-sm text-slate-600">
-                                                    <span className={`px-2 py-0.5 rounded text-xs font-semibold ${consult.data.consultationType === 'initial' ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'}`}>
-                                                        {consult.data.consultationType === 'initial' ? 'Initial' : 'Follow-up'}
-                                                    </span>
-                                                    <span>•</span>
-                                                    <span>{consult.data.ageGroup ? consult.data.ageGroup.charAt(0).toUpperCase() + consult.data.ageGroup.slice(1) : 'Unknown Group'}</span>
-                                                </div>
+                                                <Button onClick={() => handleLoadConsultation(consult)} size="sm" variant="secondary" rightIcon={<ChevronRight size={16}/>}>Review</Button>
                                             </div>
-                                            <Button onClick={() => handleLoadConsultation(consult)} size="sm" variant="secondary" rightIcon={<ChevronRight size={16}/>}>Review</Button>
-                                        </div>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
                             )}
                         </Card>
@@ -653,7 +742,6 @@ const PatientDashboard: React.FC = () => {
         );
     };
 
-    // Main layout container extended to max-w-7xl
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             {view === 'list' && renderMainList()}

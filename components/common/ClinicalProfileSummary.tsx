@@ -1,6 +1,5 @@
-
 import React from 'react';
-import { User, AlertTriangle, Route, ClipboardList, Activity, Stethoscope, Calendar, CheckCircle2, Droplets, Pill } from '../../constants/icons';
+import { User, AlertTriangle, Route, ClipboardList, Activity, Stethoscope, Calendar, CheckCircle2, Droplets, Pill, Zap, ShieldCheck } from '../../constants/icons';
 import { adultRiskFactorsList, childRiskFactorsList, youngChildRiskFactorsList } from '../../constants/riskFactorData';
 import { adultTreatments, childTreatments, youngChildTreatments } from '../../constants/treatmentData';
 import { TreatmentDetail, ControlAnswers, PatientData, PatientProfile, PhenotypeData } from '../../types';
@@ -61,13 +60,12 @@ interface ClinicalProfileSummaryProps {
 }
 
 const ClinicalProfileSummary: React.FC<ClinicalProfileSummaryProps> = ({ patientData, patientProfile }) => {
-    const { ageGroup, phenotypeData, diagnosisSymptoms, diagnosisCriteria, isOnMaintenanceTreatment, onTreatmentDiagnosis } = patientData;
+    const { ageGroup, phenotypeData, diagnosisSymptoms, diagnosisCriteria, isOnMaintenanceTreatment, onTreatmentDiagnosis, exacerbationSeverity, severeAsthma } = patientData;
     
     if (!ageGroup) {
         return <p className="text-center text-slate-500 p-8">Incomplete data.</p>
     }
     
-    // Data extraction and mapping
     const riskFactorIds = patientData[`${ageGroup}_riskFactors`] || [];
     let sourceList: { id: string, label: string }[] = [];
     switch (ageGroup) {
@@ -75,10 +73,9 @@ const ClinicalProfileSummary: React.FC<ClinicalProfileSummaryProps> = ({ patient
         case 'child': sourceList = childRiskFactorsList; break;
         case 'youngChild': sourceList = youngChildRiskFactorsList; break;
     }
-    
     const riskFactorLabels = riskFactorIds.map(id => {
         const factor = sourceList.find(f => f.id === id);
-        return factor ? factor.label : id; // Fallback to id if not found
+        return factor ? factor.label : id; 
     });
 
     const ginaStep = patientData[`${ageGroup}_currentGinaStep`];
@@ -95,50 +92,21 @@ const ClinicalProfileSummary: React.FC<ClinicalProfileSummaryProps> = ({ patient
     let treatmentDetails: TreatmentDetail | undefined;
     if (ageGroup === 'adult') {
         const { adult_pathway, adult_currentGinaStep } = patientData;
-        if (adult_pathway && adult_currentGinaStep) {
-            treatmentDetails = adultTreatments[adult_pathway]?.[adult_currentGinaStep];
-        }
+        if (adult_pathway && adult_currentGinaStep) treatmentDetails = adultTreatments[adult_pathway]?.[adult_currentGinaStep];
     } else if (ageGroup === 'child') {
         const { child_pathway, child_currentGinaStep } = patientData;
-        if (child_pathway && child_currentGinaStep) {
-            treatmentDetails = childTreatments[child_pathway]?.[child_currentGinaStep];
-        }
+        if (child_pathway && child_currentGinaStep) treatmentDetails = childTreatments[child_pathway]?.[child_currentGinaStep];
     } else if (ageGroup === 'youngChild') {
         const { youngChild_currentGinaStep, youngChild_currentTreatmentStrategy } = patientData;
         if (youngChild_currentGinaStep && youngChild_currentTreatmentStrategy) {
             const stepDetails = youngChildTreatments[youngChild_currentGinaStep];
-            if (stepDetails) {
-                if (youngChild_currentTreatmentStrategy === 'preferred') {
-                    treatmentDetails = stepDetails.preferred;
-                } else {
-                    treatmentDetails = stepDetails.alternatives?.find(alt => alt.id === youngChild_currentTreatmentStrategy);
-                }
-            }
+            if (stepDetails) treatmentDetails = youngChild_currentTreatmentStrategy === 'preferred' ? stepDetails.preferred : stepDetails.alternatives?.find(alt => alt.id === youngChild_currentTreatmentStrategy);
         }
     }
 
-    // Get active features from Diagnosis Probability
-    const typicalFeatures = Object.entries(diagnosisSymptoms.typical)
-        .filter(([_, val]) => val)
-        .map(([key]) => {
-            if (key === 'symptoms') return "Respiratory symptoms (Wheeze/SOB/Cough)";
-            if (key === 'timing') return "Worse at night/early morning";
-            if (key === 'variability') return "Variable over time/intensity";
-            if (key === 'triggers') return "Triggered by viral/exercise/allergens";
-            return key;
-        });
+    const typicalFeatures = Object.entries(diagnosisSymptoms.typical).filter(([_, val]) => val).map(([key]) => key === 'symptoms' ? "Respiratory symptoms (Wheeze/SOB/Cough)" : key === 'timing' ? "Worse at night/early morning" : key === 'variability' ? "Variable over time/intensity" : "Triggered by viral/exercise/allergens");
+    const atypicalFeatures = Object.entries(diagnosisSymptoms.atypical).filter(([_, val]) => val).map(([key]) => key === 'sputum' ? "Chronic sputum production" : key === 'dizziness' ? "Dizziness/Paresthesia" : key === 'chestPain' ? "Chest pain" : "Noisy inspiration (stridor)");
     
-    const atypicalFeatures = Object.entries(diagnosisSymptoms.atypical)
-        .filter(([_, val]) => val)
-        .map(([key]) => {
-            if (key === 'sputum') return "Chronic sputum production";
-            if (key === 'dizziness') return "Dizziness/Paresthesia";
-            if (key === 'chestPain') return "Chest pain";
-            if (key === 'noisyInspiration') return "Noisy inspiration (stridor)";
-            return key;
-        });
-
-    // Extract Confirmed Diagnosis Criteria (Box 1-2)
     const criteriaMet = [];
     if (diagnosisCriteria.symptoms.wheeze) criteriaMet.push("Symptom: Wheeze");
     if (diagnosisCriteria.symptoms.sob) criteriaMet.push("Symptom: Shortness of Breath");
@@ -149,8 +117,6 @@ const ClinicalProfileSummary: React.FC<ClinicalProfileSummaryProps> = ({ patient
     if (diagnosisCriteria.airflowLimitation.treatmentTrial) criteriaMet.push("Evidence: Positive Treatment Trial");
     if (diagnosisCriteria.airflowLimitation.challengeTest) criteriaMet.push("Evidence: Positive Challenge Test");
 
-
-    // Get specific phenotype positives
     const phenotypePositives = [];
     if (phenotypeData.allergicHistory) phenotypePositives.push("History of Allergic Disease");
     if (phenotypeData.familyHistory) phenotypePositives.push("Family History");
@@ -160,17 +126,15 @@ const ClinicalProfileSummary: React.FC<ClinicalProfileSummaryProps> = ({ patient
     if (phenotypeData.worseAtWork) phenotypePositives.push("Worse at Work");
     if (phenotypeData.persistentLimitation) phenotypePositives.push("Persistent Airflow Limitation");
 
-    // Initial Assessment Answers
     const initialAnswers = ageGroup === 'adult' ? patientData.adult_initialAssessment : ageGroup === 'child' ? patientData.child_initialAssessment : null;
-
-    // Baseline ACT (Adult)
     const baselineACT = patientData.actHistory.length > 0 ? patientData.actHistory[patientData.actHistory.length - 1].score : null;
-
-    // On Treatment status label
+    
     let treatmentStatusLabel = "";
     if (onTreatmentDiagnosis.status === 'confirmed_variable') treatmentStatusLabel = "Typical symptoms + Confirmed variable airflow";
     else if (onTreatmentDiagnosis.status === 'symptoms_no_variable') treatmentStatusLabel = `Typical symptoms + No variable airflow (FEV1: ${onTreatmentDiagnosis.fev1_percent}%)`;
     else if (onTreatmentDiagnosis.status === 'no_symptoms_normal') treatmentStatusLabel = "Few/No symptoms + Normal lung function";
+
+    const hasSevereAsthmaData = severeAsthma?.status && severeAsthma.status !== 'screening';
 
     return (
         <div className="p-6 space-y-1">
@@ -187,8 +151,60 @@ const ClinicalProfileSummary: React.FC<ClinicalProfileSummaryProps> = ({ patient
                 <SummaryItem label="Age Group" value={patientData.age || undefined} />
                 <SummaryItem label="Diagnosis Confirmed" value={patientData.diagnosisConfirmed} />
             </SummarySection>
+            
+            {exacerbationSeverity && (
+                <div className="bg-red-50 rounded-md border border-red-200 mb-2">
+                    <SummarySection title="Acute Exacerbation Management" icon={<Zap className="text-red-600"/>}>
+                        <SummaryItem label="Episode Severity" value={exacerbationSeverity === 'severe' ? 'Severe (Emergency Care)' : 'Mild to Moderate'} />
+                        <div className="mt-2 text-xs text-red-800 pl-2 border-l-2 border-red-300">
+                            <strong>Action Plan Implemented:</strong> {exacerbationSeverity === 'severe' ? 'Immediate transfer to acute care facility (ER).' : 'Managed at home/clinic with increased reliever + OCS.'}
+                        </div>
+                    </SummarySection>
+                </div>
+            )}
 
-            {/* Treatment Status & Diagnosis Logic */}
+            {/* --- SEVERE ASTHMA SECTION (PRIORITY DISPLAY) --- */}
+            {hasSevereAsthmaData && (
+                 <div className="bg-slate-50 rounded-md border border-indigo-200 mb-4 p-2">
+                    <SummarySection title="Severe Asthma Protocol Status" icon={<Activity className="text-indigo-600"/>}>
+                        <SummaryItem label="Pathway Status" value={severeAsthma.status ? severeAsthma.status.replace(/_/g, ' ').toUpperCase() : 'Active'} />
+                        
+                        {/* Basic Info from Stage 1 */}
+                        <div className="mt-3 border-t border-slate-200 pt-2">
+                            <h5 className="text-xs font-bold text-slate-500 uppercase mb-2">Initial Assessment (Stage 1)</h5>
+                            <SummaryItem label="Exacerbations (Last Year)" value={severeAsthma.basicInfo.exacerbationsLastYear} />
+                            <SummaryItem label="Hospitalizations" value={severeAsthma.basicInfo.hospitalizationsLastYear} />
+                            <SummaryItem label="SABA Use (Cans/Year)" value={severeAsthma.basicInfo.sabaUse} />
+                        </div>
+
+                        {/* Optimization Plan from Stage 3 */}
+                        {severeAsthma.optimizationPlan && (
+                            <div className="mt-3 border-t border-slate-200 pt-2">
+                                <h5 className="text-xs font-bold text-slate-500 uppercase mb-2">Optimization Trial (Stage 3)</h5>
+                                <SummaryItem label="Date Initiated" value={new Date(severeAsthma.optimizationPlan.dateInitiated).toLocaleDateString()} />
+                                <ListSummary label="Interventions" items={severeAsthma.optimizationPlan.interventions} />
+                                {severeAsthma.optimizationPlan.comorbidityPlan && (
+                                    <div className="mt-1">
+                                        <span className="font-medium text-slate-600">Comorbidity Plan:</span>
+                                        <p className="text-slate-800 text-sm pl-2 italic">{severeAsthma.optimizationPlan.comorbidityPlan}</p>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                         {/* Biomarkers from Stage 6 */}
+                        {(severeAsthma.biomarkers.bloodEosinophils || severeAsthma.biomarkers.feNo) && (
+                             <div className="mt-3 border-t border-slate-200 pt-2">
+                                <h5 className="text-xs font-bold text-slate-500 uppercase mb-2">Type 2 Biomarkers (Stage 6)</h5>
+                                {severeAsthma.biomarkers.bloodEosinophils && <SummaryItem label="Blood Eosinophils" value={`${severeAsthma.biomarkers.bloodEosinophils} /μL`} />}
+                                {severeAsthma.biomarkers.feNo && <SummaryItem label="FeNO" value={`${severeAsthma.biomarkers.feNo} ppb`} />}
+                                {severeAsthma.biomarkers.totalIgE && <SummaryItem label="Total IgE" value={`${severeAsthma.biomarkers.totalIgE} IU/mL`} />}
+                            </div>
+                        )}
+                    </SummarySection>
+                 </div>
+            )}
+
             <SummarySection title="Treatment Status at Diagnosis" icon={<Pill />}>
                 <SummaryItem label="On Controller Medication" value={isOnMaintenanceTreatment} />
                 {isOnMaintenanceTreatment && treatmentStatusLabel && (
@@ -203,7 +219,7 @@ const ClinicalProfileSummary: React.FC<ClinicalProfileSummaryProps> = ({ patient
             )}
             
             {(diagnosisCriteria.biomarkers.feNo || diagnosisCriteria.biomarkers.bloodEosinophils) && (
-                <SummarySection title="Diagnostic Biomarkers" icon={<Droplets />}>
+                <SummarySection title="Diagnostic Biomarkers (Standard)" icon={<Droplets />}>
                     {diagnosisCriteria.biomarkers.feNo && <SummaryItem label="FeNO (ppb)" value={diagnosisCriteria.biomarkers.feNo} />}
                     {diagnosisCriteria.biomarkers.bloodEosinophils && <SummaryItem label="Blood Eosinophils (/μL)" value={diagnosisCriteria.biomarkers.bloodEosinophils} />}
                 </SummarySection>
@@ -211,20 +227,14 @@ const ClinicalProfileSummary: React.FC<ClinicalProfileSummaryProps> = ({ patient
 
             <SummarySection title="Symptom Probability Check" icon={<Activity />}>
                 <ListSummary label="Typical Features" items={typicalFeatures} />
-                {atypicalFeatures.length > 0 && (
-                    <div className="mt-2 text-amber-700">
-                        <ListSummary label="Atypical Features (Caution)" items={atypicalFeatures} />
-                    </div>
-                )}
+                {atypicalFeatures.length > 0 && <div className="mt-2 text-amber-700"><ListSummary label="Atypical Features (Caution)" items={atypicalFeatures} /></div>}
             </SummarySection>
 
-            {/* Phenotype Section */}
             <SummarySection title="Clinical Phenotype" icon={<Activity />}>
                 <SummaryItem label="Suggested Phenotype" value={phenotypeData.identifiedPhenotype || 'Not evaluated'} />
                 <ListSummary label="Positive Features" items={phenotypePositives} />
             </SummarySection>
 
-            {/* Initial Assessment & Baseline */}
             {patientData.consultationType === 'initial' && initialAnswers && (
                 <SummarySection title="Initial Assessment & GINA Step" icon={<ClipboardList />}>
                     <SummaryItem label="Symptom Frequency" value={initialAnswers.symptomFrequency} />
@@ -271,31 +281,15 @@ const ClinicalProfileSummary: React.FC<ClinicalProfileSummaryProps> = ({ patient
                 <SummaryItem label="GINA Step" value={ginaStep || 'Not Determined'} />
                 <SummaryItem label={pathwayLabel} value={pathway ? pathwayValue : 'Not Determined'} />
                 {ageGroup === 'youngChild' && <SummaryItem label="Treatment Strategy" value={patientData.youngChild_currentTreatmentStrategy || 'Not set'} />}
-            
                 {treatmentDetails && (
                     <div className="mt-3 pt-3 border-t border-slate-200 space-y-3">
-                        {treatmentDetails.controller && (
-                            <div>
-                                <span className="font-medium text-slate-600">Controller:</span>
-                                <p className="text-slate-800 font-semibold pl-2">{treatmentDetails.controller}</p>
-                            </div>
-                        )}
-                        {treatmentDetails.reliever && (
-                            <div>
-                                <span className="font-medium text-slate-600">Reliever:</span>
-                                <p className="text-slate-800 font-semibold pl-2">{treatmentDetails.reliever}</p>
-                            </div>
-                        )}
-                        {treatmentDetails.additional && (
-                            <div>
-                                <ListSummary label="Additional Options" items={Array.isArray(treatmentDetails.additional) ? treatmentDetails.additional : [treatmentDetails.additional]} />
-                            </div>
-                        )}
+                        {treatmentDetails.controller && <div><span className="font-medium text-slate-600">Controller:</span><p className="text-slate-800 font-semibold pl-2">{treatmentDetails.controller}</p></div>}
+                        {treatmentDetails.reliever && <div><span className="font-medium text-slate-600">Reliever:</span><p className="text-slate-800 font-semibold pl-2">{treatmentDetails.reliever}</p></div>}
+                        {treatmentDetails.additional && <div><ListSummary label="Additional Options" items={Array.isArray(treatmentDetails.additional) ? treatmentDetails.additional : [treatmentDetails.additional]} /></div>}
                     </div>
                 )}
             </SummarySection>
 
-            {/* Prescription Section */}
             {patientData.currentPrescription && patientData.currentPrescription.length > 0 && (
                 <SummarySection title="Prescribed Medications (Rx)" icon={<Pill />}>
                     <div className="overflow-x-auto">

@@ -1,10 +1,9 @@
-
 import React, { useState } from 'react';
 import { usePatientData } from '../../contexts/PatientDataContext';
 import { useMedications } from '../../contexts/MedicationContext';
 import { usePatientRecords } from '../../contexts/PatientRecordsContext';
 import Button from '../ui/Button';
-import { PlusCircle, Trash2, Printer, Pill, FileText, XCircle, Plus } from '../../constants/icons';
+import { PlusCircle, Trash2, Printer, Pill, XCircle, Plus, Edit3, Save } from '../../constants/icons';
 import { PrescriptionItem } from '../../types';
 
 const PrescriptionWriter: React.FC = () => {
@@ -13,46 +12,116 @@ const PrescriptionWriter: React.FC = () => {
     const { getPatient } = usePatientRecords();
     
     const [selectedMedId, setSelectedMedId] = useState('');
-    const [dosage, setDosage] = useState('');
-    const [frequency, setFrequency] = useState('');
-    const [duration, setDuration] = useState('');
+    
+    // Dosage Fields
+    const [puffs, setPuffs] = useState('1');
+    const [frequency, setFrequency] = useState('Twice daily');
+    
+    // Duration Field
+    const [duration, setDuration] = useState('1 month');
+    
+    // Edit Mode State
+    const [editingId, setEditingId] = useState<string | null>(null);
+    
     const [isAddingCustom, setIsAddingCustom] = useState(false);
     const [customMedData, setCustomMedData] = useState({ brandName: '', genericName: '', defaultDosage: '' });
 
     const currentPatient = patientData.activePatientId ? getPatient(patientData.activePatientId) : null;
 
+    const puffOptions = ['1', '2', '3', '4'];
+    const frequencyOptions = [
+        'Once daily', 
+        'Twice daily', 
+        'Three times daily', 
+        'Four times daily', 
+        'PRN (As needed)',
+        'Morning',
+        'Evening'
+    ];
+    const durationOptions = [
+        '7 days', 
+        '15 days', 
+        '1 month', 
+        '2 months', 
+        '3 months', 
+        '6 months', 
+        'Ongoing'
+    ];
+
     const handleAddMedication = () => {
-        if (!selectedMedId || !dosage) return;
+        if (!selectedMedId) return;
         
         const medication = medications.find(m => m.id === selectedMedId);
         if (!medication) return;
 
         // Combine dosage and frequency into instructions
-        const instructions = frequency ? `${dosage}, ${frequency}` : dosage;
+        const instructions = `${puffs} puff(s), ${frequency}`;
 
-        const newItem: PrescriptionItem = {
-            id: crypto.randomUUID(),
-            medicationId: medication.id,
-            medicationName: `${medication.brandName} (${medication.genericName})`,
-            instructions: instructions,
-            duration: duration
-        };
+        if (editingId) {
+            // Update existing item
+            const updatedList = patientData.currentPrescription.map(item => 
+                item.id === editingId 
+                ? {
+                    ...item,
+                    medicationId: medication.id,
+                    medicationName: `${medication.brandName} (${medication.genericName})`,
+                    instructions: instructions,
+                    duration: duration
+                  }
+                : item
+            );
+            updatePatientData({ currentPrescription: updatedList });
+            setEditingId(null);
+        } else {
+            // Add new item
+            const newItem: PrescriptionItem = {
+                id: crypto.randomUUID(),
+                medicationId: medication.id,
+                medicationName: `${medication.brandName} (${medication.genericName})`,
+                instructions: instructions,
+                duration: duration
+            };
+            updatePatientData({
+                currentPrescription: [...(patientData.currentPrescription || []), newItem]
+            });
+        }
 
-        updatePatientData({
-            currentPrescription: [...(patientData.currentPrescription || []), newItem]
-        });
-
-        // Reset fields
+        // Reset fields to defaults
         setSelectedMedId('');
-        setDosage('');
-        setFrequency('');
-        setDuration('');
+        setPuffs('1');
+        setFrequency('Twice daily');
+        setDuration('1 month');
+    };
+
+    const handleEditItem = (item: PrescriptionItem) => {
+        setSelectedMedId(item.medicationId);
+        setDuration(item.duration);
+        setEditingId(item.id);
+
+        // Parse instructions to populate dropdowns
+        // Expected format: "X puff(s), Frequency"
+        const parts = item.instructions.split(' puff(s), ');
+        if (parts.length === 2) {
+            setPuffs(parts[0]);
+            setFrequency(parts[1]);
+        }
+    };
+
+    const handleCancelEdit = () => {
+        setEditingId(null);
+        setSelectedMedId('');
+        setPuffs('1');
+        setFrequency('Twice daily');
+        setDuration('1 month');
     };
 
     const handleRemoveItem = (id: string) => {
         updatePatientData({
             currentPrescription: patientData.currentPrescription.filter(item => item.id !== id)
         });
+        if (editingId === id) {
+            handleCancelEdit();
+        }
     };
 
     const handleSaveCustomMed = () => {
@@ -172,15 +241,7 @@ const PrescriptionWriter: React.FC = () => {
                         <select 
                             className="w-full p-2 bg-white border border-slate-300 rounded-md text-sm focus:ring-2 focus:ring-indigo-500"
                             value={selectedMedId}
-                            onChange={(e) => {
-                                setSelectedMedId(e.target.value);
-                                const med = medications.find(m => m.id === e.target.value);
-                                if (med && med.defaultDosage) {
-                                    setDosage(med.defaultDosage);
-                                } else {
-                                    setDosage('');
-                                }
-                            }}
+                            onChange={(e) => setSelectedMedId(e.target.value)}
                         >
                             <option value="">Select Medication...</option>
                             {medications.map(med => (
@@ -188,42 +249,69 @@ const PrescriptionWriter: React.FC = () => {
                             ))}
                         </select>
                     </div>
-                    <div className="md:col-span-3">
-                        <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Dosage</label>
-                        <input 
-                            type="text" 
+                    
+                    <div className="md:col-span-2">
+                        <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Puffs / Amount</label>
+                        <select 
                             className="w-full p-2 bg-white border border-slate-300 rounded-md text-sm focus:ring-2 focus:ring-indigo-500"
-                            placeholder="e.g. 2 puffs"
-                            value={dosage}
-                            onChange={e => setDosage(e.target.value)}
-                        />
+                            value={puffs}
+                            onChange={e => setPuffs(e.target.value)}
+                        >
+                            {puffOptions.map(opt => (
+                                <option key={opt} value={opt}>{opt}</option>
+                            ))}
+                        </select>
                     </div>
+
                     <div className="md:col-span-3">
                         <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Frequency</label>
-                        <input 
-                            type="text" 
+                        <select 
                             className="w-full p-2 bg-white border border-slate-300 rounded-md text-sm focus:ring-2 focus:ring-indigo-500"
-                            placeholder="e.g. Twice daily"
                             value={frequency}
                             onChange={e => setFrequency(e.target.value)}
-                        />
+                        >
+                            {frequencyOptions.map(opt => (
+                                <option key={opt} value={opt}>{opt}</option>
+                            ))}
+                        </select>
                     </div>
-                    <div className="md:col-span-2">
+
+                    <div className="md:col-span-3">
                         <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Duration</label>
                         <div className="flex gap-2">
-                            <input 
-                                type="text" 
+                            <select 
                                 className="w-full p-2 bg-white border border-slate-300 rounded-md text-sm focus:ring-2 focus:ring-indigo-500"
-                                placeholder="e.g. 1 mo"
                                 value={duration}
                                 onChange={e => setDuration(e.target.value)}
-                            />
-                            <Button onClick={handleAddMedication} disabled={!selectedMedId} variant="primary" className="!p-2 flex-shrink-0">
-                                <PlusCircle size={20}/>
+                            >
+                                {durationOptions.map(opt => (
+                                    <option key={opt} value={opt}>{opt}</option>
+                                ))}
+                            </select>
+                            <Button 
+                                onClick={handleAddMedication} 
+                                disabled={!selectedMedId} 
+                                variant={editingId ? "success" : "primary"} 
+                                className="!p-2 flex-shrink-0"
+                                aria-label={editingId ? "Update Medication" : "Add Medication"}
+                            >
+                                {editingId ? <Save size={20}/> : <PlusCircle size={20}/>}
                             </Button>
                         </div>
                     </div>
                 </div>
+                
+                {/* Cancel Edit Button */}
+                {editingId && (
+                    <div className="mb-4 flex justify-end">
+                         <button 
+                            onClick={handleCancelEdit} 
+                            className="text-xs text-red-600 hover:text-red-800 font-medium underline"
+                        >
+                            Cancel Editing
+                        </button>
+                    </div>
+                )}
 
                 <div className="mb-6">
                     <button 
@@ -244,7 +332,7 @@ const PrescriptionWriter: React.FC = () => {
                                 <label className="block text-xs text-indigo-800 mb-1">Generic Name</label>
                                 <input type="text" className="w-full p-1.5 text-sm border rounded" value={customMedData.genericName} onChange={e => setCustomMedData({...customMedData, genericName: e.target.value})} />
                             </div>
-                            <Button onClick={handleSaveCustomMed} size="sm" variant="primary" className="bg-indigo-600 text-white">Save to List</Button>
+                            <Button onClick={handleSaveCustomMed} size="sm" variant="primary">Save to List</Button>
                         </div>
                     )}
                 </div>
@@ -256,21 +344,34 @@ const PrescriptionWriter: React.FC = () => {
                             <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200">
                                 <tr>
                                     <th className="px-4 py-2">Medication</th>
-                                    <th className="px-4 py-2">Instructions (Dosage, Frequency)</th>
+                                    <th className="px-4 py-2">Instructions</th>
                                     <th className="px-4 py-2">Duration</th>
-                                    <th className="px-4 py-2 w-10"></th>
+                                    <th className="px-4 py-2 w-20 text-right">Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
                                 {patientData.currentPrescription.map((item, idx) => (
-                                    <tr key={idx} className="hover:bg-slate-50">
+                                    <tr key={idx} className={`hover:bg-slate-50 ${editingId === item.id ? 'bg-indigo-50' : ''}`}>
                                         <td className="px-4 py-2 font-medium text-slate-800">{item.medicationName}</td>
                                         <td className="px-4 py-2 text-slate-600">{item.instructions}</td>
                                         <td className="px-4 py-2 text-slate-500">{item.duration}</td>
                                         <td className="px-4 py-2 text-right">
-                                            <button onClick={() => handleRemoveItem(item.id)} className="text-slate-400 hover:text-red-500">
-                                                <Trash2 size={16}/>
-                                            </button>
+                                            <div className="flex justify-end gap-2">
+                                                <button 
+                                                    onClick={() => handleEditItem(item)} 
+                                                    className="text-slate-400 hover:text-indigo-600"
+                                                    aria-label="Edit item"
+                                                >
+                                                    <Edit3 size={16}/>
+                                                </button>
+                                                <button 
+                                                    onClick={() => handleRemoveItem(item.id)} 
+                                                    className="text-slate-400 hover:text-red-500"
+                                                    aria-label="Delete item"
+                                                >
+                                                    <Trash2 size={16}/>
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}

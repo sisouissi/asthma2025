@@ -1,5 +1,4 @@
 
-
 import React from 'react';
 import { usePatientData } from '../../contexts/PatientDataContext';
 import { useNavigation } from '../../contexts/NavigationContext';
@@ -18,11 +17,8 @@ const ManagementCycleWidget: React.FC<ManagementCycleWidgetProps> = ({ ageGroup 
     const { navigateTo } = useNavigation();
     const { openInfoModal, openPrintProfileModal } = useUIState();
 
-    // Hide this widget for initial consultations as we focus on diagnosis and initial treatment selection
-    if (patientData.consultationType === 'initial') {
-        return null;
-    }
-
+    // Restriction removed to allow simulation in all modes
+    
     const controlLevel = patientData[`${ageGroup}_controlLevel` as const] as ControlLevel | null;
     const reminderDate = patientData[`${ageGroup}_reviewReminderDate` as const] as string | null;
     const assessmentStep: Record<AgeGroup, string> = {
@@ -55,7 +51,7 @@ const ManagementCycleWidget: React.FC<ManagementCycleWidgetProps> = ({ ageGroup 
     
     return (
         <div className="p-5 bg-slate-50 rounded-lg border border-slate-200 shadow-sm mb-6">
-            <h3 className="text-lg font-semibold text-slate-800 mb-4 text-center">Asthma Management Cycle (Follow-up)</h3>
+            <h3 className="text-lg font-semibold text-slate-800 mb-4 text-center">Asthma Management Cycle</h3>
             <div className="flex justify-around items-center mb-6">
                 <CycleStep icon={<ListChecks />} title="1. Assess" active={!controlLevel} />
                 <div className="flex-1 h-1 bg-slate-300 mx-2"></div>
