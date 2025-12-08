@@ -17,6 +17,8 @@ const PatientSummaryModal: React.FC<PatientSummaryModalProps> = ({ isOpen, onClo
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [isSaved, setIsSaved] = useState(false);
+    const [manualApiKey, setManualApiKey] = useState('');
+    const [showApiKeyInput, setShowApiKeyInput] = useState(false);
 
     useEffect(() => {
         if (isOpen && patient) {
@@ -31,9 +33,16 @@ const PatientSummaryModal: React.FC<PatientSummaryModalProps> = ({ isOpen, onClo
         setSummary('');
 
         try {
-            const apiKey = (import.meta as any).env.VITE_GEMINI_API_KEY;
+            let apiKey = (import.meta as any).env.VITE_GEMINI_API_KEY;
+
+            // Fallback to manual key if env var is missing
+            if (!apiKey && manualApiKey) {
+                apiKey = manualApiKey;
+            }
+
             if (!apiKey) {
-                throw new Error('API key not configured. Please add VITE_GEMINI_API_KEY to your .env file.');
+                setShowApiKeyInput(true);
+                throw new Error('API key not configured. Please enter your Google Gemini API Key below.');
             }
 
             // Dynamic import to avoid SSR issues
@@ -170,13 +179,30 @@ const PatientSummaryModal: React.FC<PatientSummaryModalProps> = ({ isOpen, onClo
                         <div className="bg-red-50 text-red-700 p-4 rounded-lg border border-red-200 text-center">
                             <p className="font-bold mb-2">Generation failed.</p>
                             <p className="text-sm mb-4">{error}</p>
+
+                            {showApiKeyInput && (
+                                <div className="mb-4 max-w-md mx-auto">
+                                    <label className="block text-xs font-medium text-red-800 mb-1 text-left">Enter Gemini API Key:</label>
+                                    <input
+                                        type="password"
+                                        value={manualApiKey}
+                                        onChange={(e) => setManualApiKey(e.target.value)}
+                                        className="w-full px-3 py-2 border border-red-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                                        placeholder="AIzaSy..."
+                                    />
+                                    <p className="text-xs text-red-600 mt-1 text-left">
+                                        Get a key from <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" className="underline">Google AI Studio</a>
+                                    </p>
+                                </div>
+                            )}
+
                             <button
                                 type="button"
                                 onClick={generateSummary}
-                                className="inline-flex items-center gap-2 px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg transition-colors"
+                                className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-red-300 hover:bg-red-50 text-red-700 rounded-lg transition-colors shadow-sm"
                             >
                                 <RefreshCw size={14} />
-                                Retry
+                                {showApiKeyInput ? 'Try with Key' : 'Retry'}
                             </button>
                         </div>
                     )}
