@@ -1,6 +1,6 @@
 
 
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { usePatientData } from '../../../contexts/PatientDataContext';
 import { useNavigation } from '../../../contexts/NavigationContext';
 import AssessmentCard from './AssessmentCard';
@@ -10,6 +10,11 @@ import { BarChart3, Calendar, Square, CheckSquare, ChevronRight, ClipboardList }
 const Stage6_PhenotypeAssessment: React.FC = () => {
     const { patientData, updatePatientData } = usePatientData();
     const { navigateTo } = useNavigation();
+
+    // Scroll to top on mount to ensure user sees the input form
+    useEffect(() => {
+        window.scrollTo(0, 0);
+    }, []);
 
     const updateBiomarker = useCallback((field: string, value: any) => {
         const updates = {
@@ -40,8 +45,8 @@ const Stage6_PhenotypeAssessment: React.FC = () => {
                 <div className="mt-4">
                     <h6 className="font-medium text-sm mb-2">Allergy Assessment:</h6>
                     <Checkbox label="Clinically allergen-driven symptoms" checked={symptoms.allergenDriven} onChange={(e: any) => {
-                         const updates = {...patientData, severeAsthma: {...patientData.severeAsthma, symptoms: {...patientData.severeAsthma.symptoms, allergenDriven: e.target.checked}}};
-                         updatePatientData(updates);
+                        const updates = { ...patientData, severeAsthma: { ...patientData.severeAsthma, symptoms: { ...patientData.severeAsthma.symptoms, allergenDriven: e.target.checked } } };
+                        updatePatientData(updates);
                     }} />
                     <Checkbox label="Specific IgE testing positive for relevant allergens" checked={biomarkers.specificIgE} onChange={(e: any) => updateBiomarker('specificIgE', e.target.checked)} />
                     <Checkbox label="Skin prick testing positive for inhaled allergens" checked={biomarkers.skinPrickTest} onChange={(e: any) => updateBiomarker('skinPrickTest', e.target.checked)} />
@@ -58,7 +63,7 @@ const Stage6_PhenotypeAssessment: React.FC = () => {
                     </ul>
                 </div>
             </AssessmentCard>
-            
+
             <AssessmentCard title="Data Summary for Phenotype Evaluation" icon={<ClipboardList />}>
                 <div className="space-y-2 text-sm">
                     <p>Please review the entered biomarker data before proceeding.</p>
@@ -72,13 +77,13 @@ const Stage6_PhenotypeAssessment: React.FC = () => {
             </AssessmentCard>
 
             <div className="mt-6 border-t border-slate-300 pt-6">
-                 <Button 
+                <Button
                     onClick={() => navigateTo('SEVERE_ASTHMA_STAGE_7')}
                     fullWidth
                     size="lg"
                     variant="primary"
                     rightIcon={<ChevronRight />}
-                 >
+                >
                     View Treatment Options
                 </Button>
             </div>
@@ -97,9 +102,9 @@ const InputField: React.FC<any> = ({ label, note, ...props }) => (
 
 const Checkbox: React.FC<any> = ({ label, checked, onChange }) => (
     <label className="flex items-center cursor-pointer text-sm">
-      <input type="checkbox" className="hidden" checked={checked} onChange={onChange} />
-      {checked ? <CheckSquare size={20} className="text-sky-600 mr-2" /> : <Square size={20} className="text-slate-400 mr-2" />}
-      {label}
+        <input type="checkbox" className="hidden" checked={checked} onChange={onChange} />
+        {checked ? <CheckSquare size={20} className="text-sky-600 mr-2" /> : <Square size={20} className="text-slate-400 mr-2" />}
+        {label}
     </label>
 );
 

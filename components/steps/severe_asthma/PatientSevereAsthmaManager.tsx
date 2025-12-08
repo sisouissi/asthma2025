@@ -34,16 +34,15 @@ const stages = [
 ];
 
 const StageHeader: React.FC<{ stage: any, isActive: boolean, onClick: () => void }> = ({ stage, isActive, onClick }) => (
-    <div 
-      className={`p-3 rounded-lg cursor-pointer transition-all duration-200 ${
-        isActive ? `${stage.color} text-white shadow-lg` : 'bg-gray-100 hover:bg-gray-200'
-      }`}
-      onClick={onClick}
+    <div
+        className={`p-3 rounded-lg cursor-pointer transition-all duration-200 ${isActive ? `${stage.color} text-white shadow-lg` : 'bg-gray-100 hover:bg-gray-200'
+            }`}
+        onClick={onClick}
     >
-      <div className="flex items-center justify-between">
-        <span className="font-semibold text-sm">Stage {stage.id}: {stage.title}</span>
-        {isActive ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-      </div>
+        <div className="flex items-center justify-between">
+            <span className="font-semibold text-sm">Stage {stage.id}: {stage.title}</span>
+            {isActive ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+        </div>
     </div>
 );
 
@@ -51,7 +50,7 @@ const PatientSevereAsthmaManager: React.FC = () => {
     const { currentStepId, navigateTo } = useNavigation();
     const { patientData } = usePatientData();
     const { getPatient } = usePatientRecords();
-    
+
     const activeStage = stages.find(s => s.stepId === currentStepId);
     const activeStageId = activeStage ? activeStage.id : 1;
     const patientProfile = patientData.activePatientId ? getPatient(patientData.activePatientId) : null;
@@ -61,7 +60,7 @@ const PatientSevereAsthmaManager: React.FC = () => {
         // Only run logic if we are at the entry point (Stage 1) to avoid overriding user navigation within the module
         if (currentStepId === 'SEVERE_ASTHMA_STAGE_1') {
             const status = patientData.severeAsthma.status;
-            
+
             // 1. If patient is returning for 3-6 month review (Optimizing) OR returning after treating factors
             if (status === 'optimizing' || status === 'addressing_factors' || status === 'controlled_on_optimization') {
                 navigateTo('SEVERE_ASTHMA_STAGE_4');
@@ -78,6 +77,11 @@ const PatientSevereAsthmaManager: React.FC = () => {
         }
     }, [patientData.severeAsthma.status, currentStepId, navigateTo]);
 
+    // Scroll to top when stage changes
+    useEffect(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, [currentStepId]);
+
     const handleStageClick = (stepId: StepId) => {
         navigateTo(stepId);
     };
@@ -88,16 +92,16 @@ const PatientSevereAsthmaManager: React.FC = () => {
             if (prevStage) navigateTo(prevStage.stepId as StepId);
         }
     };
-    
+
     const handleNextStage = () => {
         if (activeStageId < stages.length) {
-             const nextStage = stages.find(s => s.id === activeStageId + 1);
-             if (nextStage) navigateTo(nextStage.stepId as StepId);
+            const nextStage = stages.find(s => s.id === activeStageId + 1);
+            if (nextStage) navigateTo(nextStage.stepId as StepId);
         }
     };
-    
+
     const renderCurrentStage = () => {
-        switch(currentStepId) {
+        switch (currentStepId) {
             case 'SEVERE_ASTHMA_STAGE_1': return <Stage1 />;
             case 'SEVERE_ASTHMA_STAGE_2': return <Stage2 />;
             case 'SEVERE_ASTHMA_STAGE_3': return <Stage3 />;
@@ -126,7 +130,7 @@ const PatientSevereAsthmaManager: React.FC = () => {
                 </div>
                 {patientProfile && (
                     <div className="mt-4 md:mt-0 flex items-center bg-indigo-50 px-4 py-2 rounded-full border border-indigo-200">
-                        <User size={18} className="text-indigo-600 mr-2"/>
+                        <User size={18} className="text-indigo-600 mr-2" />
                         <span className="font-semibold text-indigo-900">{patientProfile.lastName.toUpperCase()}, {patientProfile.firstName}</span>
                         <span className="mx-2 text-indigo-300">|</span>
                         <span className="text-xs text-indigo-700">DOB: {patientProfile.dateOfBirth}</span>
@@ -142,21 +146,21 @@ const PatientSevereAsthmaManager: React.FC = () => {
                         <div className="space-y-2">
                             {stages.map((stage) => (
                                 <StageHeader
-                                key={stage.id}
-                                stage={stage}
-                                isActive={activeStageId === stage.id}
-                                onClick={() => handleStageClick(stage.stepId as StepId)}
+                                    key={stage.id}
+                                    stage={stage}
+                                    isActive={activeStageId === stage.id}
+                                    onClick={() => handleStageClick(stage.stepId as StepId)}
                                 />
                             ))}
                         </div>
-            
+
                         <div className="flex flex-col gap-3 mt-6 pt-4 border-t border-slate-100">
                             <Button
                                 onClick={handlePreviousStage}
                                 disabled={activeStageId === 1}
                                 variant="secondary"
                                 fullWidth
-                                leftIcon={<ArrowLeft/>}
+                                leftIcon={<ArrowLeft />}
                             >
                                 Previous Stage
                             </Button>
@@ -165,7 +169,7 @@ const PatientSevereAsthmaManager: React.FC = () => {
                                 disabled={activeStageId >= stages.length}
                                 variant="primary"
                                 fullWidth
-                                rightIcon={<ArrowRight/>}
+                                rightIcon={<ArrowRight />}
                             >
                                 Next Stage
                             </Button>

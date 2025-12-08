@@ -8,14 +8,14 @@ import { Calendar, CheckCircle2, AlertTriangle, ListChecks, ArrowRight, Square, 
 import PrescriptionWriter from '../../common/PrescriptionWriter';
 
 interface ControlAnswers {
-  [key: string]: boolean | null;
+    [key: string]: boolean | null;
 }
 
 const questions = [
-  { id: 'q1', text: 'In the past 4 weeks, has the patient had daytime symptoms more than twice a week?' },
-  { id: 'q2', text: 'In the past 4 weeks, has the patient had any night waking due to asthma?' },
-  { id: 'q3', text: 'In the past 4 weeks, has the patient needed SABA or ICS-formoterol for relief more than twice a week?' },
-  { id: 'q4', text: 'In the past 4 weeks, has the patient had any activity limitation due to asthma?' },
+    { id: 'q1', text: 'In the past 4 weeks, has the patient had daytime symptoms more than twice a week?' },
+    { id: 'q2', text: 'In the past 4 weeks, has the patient had any night waking due to asthma?' },
+    { id: 'q3', text: 'In the past 4 weeks, has the patient needed SABA or ICS-formoterol for relief more than twice a week?' },
+    { id: 'q4', text: 'In the past 4 weeks, has the patient had any activity limitation due to asthma?' },
 ];
 
 const reviewChecklist = [
@@ -41,11 +41,11 @@ const Stage4_ReviewResponse: React.FC = () => {
 
 
     const handleAnswer = (id: string, value: boolean) => {
-        setAnswers(prev => ({...prev, [id]: value}));
-        setControlResult(null); 
+        setAnswers(prev => ({ ...prev, [id]: value }));
+        setControlResult(null);
         setStepDownResult(null);
     };
-    
+
     const handleStepDownAnswer = (value: 'yes' | 'no') => {
         setStepDownResult(value);
         // Set default next review date to 3 months from now if 'no' (controlled)
@@ -64,7 +64,7 @@ const Stage4_ReviewResponse: React.FC = () => {
     };
 
     const handleSaveAndExit = (newStatus: 'confirmed_severe' | 'rejected_severe' | 'controlled_on_optimization') => {
-         const updatedData = {
+        const updatedData = {
             ...patientData,
             severeAsthma: {
                 ...patientData.severeAsthma,
@@ -75,32 +75,32 @@ const Stage4_ReviewResponse: React.FC = () => {
         updatePatientData(updatedData);
 
         if (patientData.activePatientId) {
-             if (patientData.activeConsultationId) {
-                 updateConsultation(patientData.activePatientId, patientData.activeConsultationId, updatedData);
-             } else {
-                 saveConsultation(patientData.activePatientId, updatedData);
-             }
-             navigateTo('PATIENT_DASHBOARD');
-         } else {
+            if (patientData.activeConsultationId) {
+                updateConsultation(patientData.activePatientId, patientData.activeConsultationId, updatedData);
+            } else {
+                saveConsultation(patientData.activePatientId, updatedData);
+            }
+            navigateTo('PATIENT_DASHBOARD');
+        } else {
             navigateTo('SEVERE_ASTHMA_STAGE_3'); // Fallback for demo
-         }
+        }
     };
 
     const updateStatus = (newStatus: 'confirmed_severe' | 'rejected_severe') => {
-         updatePatientData({
+        updatePatientData({
             severeAsthma: {
                 ...patientData.severeAsthma,
                 status: newStatus
             }
         });
         if (newStatus === 'confirmed_severe') {
-             if (status === 'addressing_factors') navigateTo('SEVERE_ASTHMA_STAGE_6');
-             else navigateTo('SEVERE_ASTHMA_STAGE_5');
+            if (status === 'addressing_factors') navigateTo('SEVERE_ASTHMA_STAGE_6');
+            else navigateTo('SEVERE_ASTHMA_STAGE_5');
         } else {
             handleSaveAndExit('rejected_severe');
         }
     };
-    
+
     const isAddressingFactors = status === 'addressing_factors';
     const wasControlledBefore = status === 'controlled_on_optimization';
 
@@ -110,7 +110,7 @@ const Stage4_ReviewResponse: React.FC = () => {
             {(status === 'optimizing' || isAddressingFactors || wasControlledBefore) && optimizationPlan && (
                 <div className="mb-8 p-5 bg-slate-50 border border-slate-300 rounded-xl shadow-sm">
                     <div className="flex items-center mb-4 pb-3 border-b border-slate-200">
-                        <History size={24} className="text-indigo-600 mr-3"/>
+                        <History size={24} className="text-indigo-600 mr-3" />
                         <div>
                             <h4 className="font-bold text-slate-800 text-lg">
                                 {isAddressingFactors ? 'Specialist Intervention Context' : 'Optimization Trial Context'}
@@ -124,7 +124,7 @@ const Stage4_ReviewResponse: React.FC = () => {
                         <div className="space-y-4">
                             <div>
                                 <h5 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 flex items-center">
-                                    <ClipboardList size={14} className="mr-1.5"/> Interventions Implemented
+                                    <ClipboardList size={14} className="mr-1.5" /> Interventions Implemented
                                 </h5>
                                 {optimizationPlan.interventions.length > 0 ? (
                                     <ul className="list-disc list-inside text-sm text-slate-700 space-y-1 bg-white p-3 rounded-md border border-slate-200">
@@ -132,9 +132,9 @@ const Stage4_ReviewResponse: React.FC = () => {
                                     </ul>
                                 ) : <p className="text-sm italic text-slate-400">No specific interventions recorded.</p>}
                             </div>
-                             <div>
+                            <div>
                                 <h5 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 flex items-center">
-                                    <Activity size={14} className="mr-1.5"/> Baseline Status
+                                    <Activity size={14} className="mr-1.5" /> Baseline Status
                                 </h5>
                                 <div className="bg-white p-3 rounded-md border border-slate-200 text-sm text-slate-700 grid grid-cols-2 gap-2">
                                     <div><span className="text-slate-500 text-xs block">Exacerbations (Year)</span><span className="font-medium">{basicInfo.exacerbationsLastYear || 'N/A'}</span></div>
@@ -144,7 +144,7 @@ const Stage4_ReviewResponse: React.FC = () => {
                         </div>
                         <div>
                             <h5 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 flex items-center">
-                                <Pill size={14} className="mr-1.5"/> Optimization Treatment
+                                <Pill size={14} className="mr-1.5" /> Optimization Treatment
                             </h5>
                             {currentPrescription && currentPrescription.length > 0 ? (
                                 <div className="bg-white p-3 rounded-md border border-slate-200 space-y-2">
@@ -162,9 +162,9 @@ const Stage4_ReviewResponse: React.FC = () => {
             )}
 
             <AssessmentCard title={isAddressingFactors ? "Review After Specialist Intervention" : "Review Response"} icon={<Calendar />}>
-                 {/* Review Checklist */}
+                {/* Review Checklist */}
                 <div className="mb-6 p-4 bg-indigo-50 border border-indigo-200 rounded-lg">
-                    <h4 className="font-semibold text-indigo-900 mb-2 flex items-center"><ListChecks size={18} className="mr-2"/>Review Checklist</h4>
+                    <h4 className="font-semibold text-indigo-900 mb-2 flex items-center"><ListChecks size={18} className="mr-2" />Review Checklist</h4>
                     <ul className="list-disc list-inside text-sm text-indigo-700 grid grid-cols-1 md:grid-cols-2 gap-1">
                         {reviewChecklist.map((item, i) => <li key={i}>{item}</li>)}
                     </ul>
@@ -178,25 +178,25 @@ const Stage4_ReviewResponse: React.FC = () => {
                                 <div key={q.id} className="p-3 bg-white border border-slate-200 rounded-lg flex justify-between items-center">
                                     <p className="font-medium text-slate-700 text-sm mr-4">{q.text}</p>
                                     <div className="flex space-x-2 flex-shrink-0">
-                                    <Button onClick={() => handleAnswer(q.id, true)} variant={answers[q.id] === true ? 'warning' : 'secondary'} size="sm" leftIcon={answers[q.id] === true ? <CheckSquare size={16}/> : <Square size={16}/>}>Yes</Button>
-                                    <Button onClick={() => handleAnswer(q.id, false)} variant={answers[q.id] === false ? 'success' : 'secondary'} size="sm" leftIcon={answers[q.id] === false ? <CheckSquare size={16}/> : <Square size={16}/>}>No</Button>
+                                        <Button onClick={() => handleAnswer(q.id, true)} variant={answers[q.id] === true ? 'warning' : 'secondary'} size="sm" leftIcon={answers[q.id] === true ? <CheckSquare size={16} /> : <Square size={16} />}>Yes</Button>
+                                        <Button onClick={() => handleAnswer(q.id, false)} variant={answers[q.id] === false ? 'success' : 'secondary'} size="sm" leftIcon={answers[q.id] === false ? <CheckSquare size={16} /> : <Square size={16} />}>No</Button>
                                     </div>
                                 </div>
                             ))}
                         </div>
                         <div className="mt-6 border-t border-slate-200 pt-5">
-                            <Button onClick={assessControl} disabled={!allAnswered} fullWidth size="lg" leftIcon={<Activity/>}>Determine Control Status</Button>
+                            <Button onClick={assessControl} disabled={!allAnswered} fullWidth size="lg" leftIcon={<Activity />}>Determine Control Status</Button>
                         </div>
                     </>
                 )}
 
                 {/* UNCONTROLLED SCENARIOS */}
                 {controlResult === 'uncontrolled' && (
-                     <>
+                    <>
                         {wasControlledBefore ? (
                             // Patient was controlled, now failing -> Uncontrolled on Step-Down
                             <div className="mt-4 p-5 bg-amber-50 border-l-4 border-amber-500 rounded-r-md animate-fade-in">
-                                <h4 className="font-bold text-amber-800 flex items-center mb-2 text-lg"><AlertTriangle size={24} className="mr-2"/>YES: Uncontrolled on Step-Down</h4>
+                                <h4 className="font-bold text-amber-800 flex items-center mb-2 text-lg"><AlertTriangle size={24} className="mr-2" />YES: Uncontrolled on Step-Down</h4>
                                 <p className="text-sm text-amber-700 mb-4">The patient was controlled at the last visit but symptoms have returned after stepping down. This confirms the need for higher-dose therapy.</p>
                                 <p className="text-sm text-amber-700 mb-4"><strong>Diagnosis: Severe Asthma is likely.</strong></p>
                                 <ul className="text-sm text-amber-800 list-disc list-inside mb-4 font-medium">
@@ -208,23 +208,23 @@ const Stage4_ReviewResponse: React.FC = () => {
                         ) : (
                             // Standard failure to control
                             <div className="mt-4 p-5 bg-red-50 border-l-4 border-red-500 rounded-r-md animate-fade-in">
-                                <h4 className="font-bold text-red-800 flex items-center mb-2 text-lg"><XCircle size={24} className="mr-2"/>YES: Asthma is still uncontrolled</h4>
+                                <h4 className="font-bold text-red-800 flex items-center mb-2 text-lg"><XCircle size={24} className="mr-2" />YES: Asthma is still uncontrolled</h4>
                                 <p className="text-sm text-red-700 mb-4">Since asthma is still uncontrolled despite optimized therapy, the diagnosis of <strong>Severe Asthma</strong> is likely.</p>
                                 <p className="text-sm text-red-700 mb-4 font-semibold italic">
-                                    "Severe asthma is asthma that is uncontrolled despite adherence to maximal optimized high-dose ICS-LABA treatment and management of contributory factors." (GINA 2025)
+                                    "Severe asthma is asthma that is uncontrolled despite good adherence to maximal optimized high-dose ICS-LABA treatment and management of contributory factors, or that worsens when high-dose treatment is decreased." (GINA 2025)
                                 </p>
                                 <Button onClick={() => updateStatus('confirmed_severe')} variant="danger" rightIcon={<ChevronRight />} size="lg">Confirm Severe Asthma & Proceed</Button>
                             </div>
                         )}
-                     </>
+                    </>
                 )}
-                
+
                 {/* CONTROLLED SCENARIO - Step Down Loop */}
                 {controlResult === 'controlled' && (
                     <div className="mt-4 p-5 bg-emerald-50 border-l-4 border-emerald-500 rounded-r-md animate-fade-in">
-                        <h4 className="font-bold text-emerald-800 flex items-center mb-2 text-lg"><CheckCircle2 size={24} className="mr-2"/>NO: Asthma is now well controlled</h4>
-                        
-                         {isAddressingFactors ? (
+                        <h4 className="font-bold text-emerald-800 flex items-center mb-2 text-lg"><CheckCircle2 size={24} className="mr-2" />NO: Asthma is now well controlled</h4>
+
+                        {isAddressingFactors ? (
                             // Coming from Specialist Factor Treatment -> Success -> Difficult to Treat Asthma
                             <>
                                 <p className="text-sm text-emerald-700 mb-4">Symptoms improved after treating comorbidities/factors. This confirms <strong>"Difficult-to-Treat Asthma"</strong> (NOT Severe Asthma).</p>
@@ -235,7 +235,7 @@ const Stage4_ReviewResponse: React.FC = () => {
                                 </div>
                                 <Button onClick={() => updateStatus('rejected_severe')} variant="success" rightIcon={<Save />} size="lg" fullWidth>Save & Exit Severe Pathway</Button>
                             </>
-                         ) : (
+                        ) : (
                             // Standard Optimization Success -> Monitoring Loop
                             <>
                                 <div className="text-sm text-emerald-700 space-y-2 mb-6">
@@ -255,7 +255,7 @@ const Stage4_ReviewResponse: React.FC = () => {
                                 </div>
                                 <Button onClick={() => handleSaveAndExit('controlled_on_optimization')} variant="primary" rightIcon={<Save />} size="lg" fullWidth>Save & Monitor (3 Months)</Button>
                             </>
-                         )}
+                        )}
                     </div>
                 )}
             </AssessmentCard>

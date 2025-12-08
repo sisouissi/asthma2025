@@ -11,14 +11,15 @@ export const config = {
 // We wrap the initialization in a check to be robust, in case of build misconfigurations.
 let ai: GoogleGenAI | null = null;
 if (typeof window === 'undefined') {
-    if (!process.env.API_KEY) {
-        // This log helps in debugging Vercel environment variable setup.
-        console.error("API_KEY environment variable is not set for the serverless function.");
-        // We don't throw an error here to prevent build failures, 
-        // the handler will return an error response instead.
-    } else {
-        ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-    }
+  const apiKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    // This log helps in debugging Vercel environment variable setup.
+    console.error("API_KEY (or GEMINI_API_KEY) environment variable is not set for the serverless function.");
+    // We don't throw an error here to prevent build failures, 
+    // the handler will return an error response instead.
+  } else {
+    ai = new GoogleGenAI({ apiKey });
+  }
 }
 
 
@@ -40,7 +41,7 @@ export default async function handler(req: Request) {
   if (req.method !== 'POST') {
     return new Response('Method Not Allowed', { status: 405 });
   }
-  
+
   // Check if the AI client was initialized (i.e., if API_KEY was available on the server).
   if (!ai) {
     console.error("AI client not initialized. Check API_KEY environment variable.");
@@ -66,23 +67,23 @@ export default async function handler(req: Request) {
     });
 
     const responseStream = new ReadableStream({
-        async start(controller) {
-            const encoder = new TextEncoder();
-            for await (const chunk of geminiStream) {
-                const text = chunk.text;
-                if(text) {
-                    controller.enqueue(encoder.encode(text));
-                }
-            }
-            controller.close();
+      async start(controller) {
+        const encoder = new TextEncoder();
+        for await (const chunk of geminiStream) {
+          const text = chunk.text;
+          if (text) {
+            controller.enqueue(encoder.encode(text));
+          }
         }
+        controller.close();
+      }
     });
 
     return new Response(responseStream, {
-      headers: { 
-          'Content-Type': 'text/plain; charset=utf-8',
-          'Cache-Control': 'no-cache',
-          'Connection': 'keep-alive',
+      headers: {
+        'Content-Type': 'text/plain; charset=utf-8',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
       },
     });
 

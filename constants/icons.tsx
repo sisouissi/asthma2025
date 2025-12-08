@@ -65,5 +65,8 @@ export {
   Key,
   Microscope,
   Scan,
-  BarChart3
+  BarChart3,
+  Upload,
+  Download,
+  FileJson
 } from 'lucide-react';

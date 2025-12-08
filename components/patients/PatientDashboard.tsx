@@ -11,7 +11,7 @@ import { StepId, AgeGroup } from '../../types';
 import BackupRestoreModule from './BackupRestoreModule';
 import { Sparkles } from 'lucide-react';
 import PatientSummaryModal from './PatientSummaryModal';
-import MarkdownRenderer from '../ui/MarkdownRenderer';
+import ClinicalSummaryCard from './ClinicalSummaryCard';
 
 interface PatientListItemProps {
     patient: PatientProfile;
@@ -739,56 +739,12 @@ const PatientDashboard: React.FC = () => {
                             </Button>
                         </div>
 
-                        {/* AI Clinical Summary Box */}
-                        <div className="bg-white border border-indigo-100 rounded-lg shadow-sm overflow-hidden">
-                            <div className="bg-indigo-50 px-4 py-3 border-b border-indigo-100 flex justify-between items-center">
-                                <div className="flex items-center gap-2 text-indigo-800">
-                                    <Sparkles size={18} />
-                                    <h3 className="font-semibold">Latest Clinical Summary</h3>
-                                </div>
-                                {selectedPatient?.aiSummaries && selectedPatient.aiSummaries.length > 0 && (
-                                    <span className="text-xs text-indigo-600 bg-white px-2 py-0.5 rounded-full border border-indigo-200">
-                                        {new Date(selectedPatient.aiSummaries[0].date).toLocaleDateString()}
-                                    </span>
-                                )}
-                            </div>
-
-                            <div className="p-4">
-                                {selectedPatient?.aiSummaries && selectedPatient.aiSummaries.length > 0 ? (
-                                    <div className="prose prose-sm prose-indigo max-w-none max-h-60 overflow-y-auto pr-2 custom-scrollbar">
-                                        <MarkdownRenderer content={selectedPatient.aiSummaries[0].content} />
-                                    </div>
-                                ) : (
-                                    <div className="text-center py-4">
-                                        <p className="text-sm text-slate-500 mb-3">No AI summary generated yet.</p>
-                                        <Button
-                                            onClick={(e) => selectedPatient && handleOpenSummary(selectedPatient, e)}
-                                            variant="secondary"
-                                            size="sm"
-                                            fullWidth
-                                            className="text-indigo-600 border-indigo-200 hover:bg-indigo-50"
-                                        >
-                                            <Sparkles size={14} className="mr-1" />
-                                            Generate Summary
-                                        </Button>
-                                    </div>
-                                )}
-
-                                {selectedPatient?.aiSummaries && selectedPatient.aiSummaries.length > 0 && (
-                                    <div className="mt-3 pt-3 border-t border-slate-100">
-                                        <Button
-                                            onClick={(e) => selectedPatient && handleOpenSummary(selectedPatient, e)}
-                                            variant="ghost"
-                                            size="sm"
-                                            fullWidth
-                                            className="text-indigo-600 hover:bg-indigo-50 text-xs"
-                                        >
-                                            View Full History & Generate New
-                                        </Button>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
+                        {selectedPatient && (
+                            <ClinicalSummaryCard
+                                patient={selectedPatient}
+                                onGenerate={handleOpenSummary}
+                            />
+                        )}
 
                         <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-sm">
                             <h3 className="font-semibold text-slate-800 mb-3">Quick Stats</h3>

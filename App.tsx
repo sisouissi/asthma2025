@@ -7,9 +7,9 @@ import { PatientRecordsProvider } from './contexts/PatientRecordsContext';
 import { MedicationProvider } from './contexts/MedicationContext';
 import { MainLayout } from './components/layout/MainLayout';
 
-import { InitialStep } from './components/steps/InitialStep'; 
+import { InitialStep } from './components/steps/InitialStep';
 import DiagnosisPendingStep from './components/steps/common/DiagnosisPendingStep';
-import AbbreviationsStep from './components/steps/common/AbbreviationsStep'; 
+import AbbreviationsStep from './components/steps/common/AbbreviationsStep';
 import AIAssistantPanel from './components/ai/AIAssistantPanel';
 import GoalsModal from './components/common/GoalsModal';
 import InfoModal from './components/common/InfoModal';
@@ -71,6 +71,9 @@ const StepRenderer: React.FC = () => {
     case 'INITIAL_STEP':
       return <InitialStep />;
     case 'PATIENT_DASHBOARD':
+    case 'PATIENT_DASHBOARD_LIST':
+    case 'PATIENT_DASHBOARD_CREATE':
+    case 'PATIENT_DASHBOARD_DETAILS':
       return <PatientDashboard />;
     case 'CONSULTATION_SUMMARY_STEP':
       return <ConsultationSummaryStep />;
@@ -85,11 +88,11 @@ const StepRenderer: React.FC = () => {
     case 'INITIAL_DIAGNOSIS_FLOWCHART_STEP':
       return <InitialDiagnosisFlowchartStep />;
     case 'STEP_DOWN_ASSESS_STEP':
-        return <StepDownAssessStep />;
+      return <StepDownAssessStep />;
     case 'STEP_DOWN_ADJUST_STEP':
-        return <StepDownAdjustStep />;
+      return <StepDownAdjustStep />;
     case 'STEP_DOWN_REVIEW_STEP':
-        return <StepDownReviewStep />;
+      return <StepDownReviewStep />;
 
     // Adult Pathway
     case 'ADULT_DIAGNOSIS_STEP':
@@ -109,9 +112,9 @@ const StepRenderer: React.FC = () => {
     case 'ADULT_EXACERBATION_INTRO_STEP':
       return <AdultExacerbationIntroStep />;
     case 'ADULT_EXACERBATION_SEVERITY_STEP':
-        return <AdultExacerbationSeverityStep />;
+      return <AdultExacerbationSeverityStep />;
     case 'ADULT_EXACERBATION_PLAN_STEP':
-        return <AdultExacerbationPlanStep />;
+      return <AdultExacerbationPlanStep />;
 
     // Child Pathway
     case 'CHILD_DIAGNOSIS_STEP':
@@ -120,7 +123,7 @@ const StepRenderer: React.FC = () => {
       return <ChildInitialAssessmentStep />;
     case 'CHILD_RISK_ASSESSMENT_STEP':
       return <ChildRiskAssessmentStep />;
-    case 'CHILD_PATHWAY_SELECTION_STEP': 
+    case 'CHILD_PATHWAY_SELECTION_STEP':
       return <ChildPathwaySelectionStep />;
     case 'CHILD_TREATMENT_PLAN_STEP':
       return <ChildTreatmentPlanStep />;
@@ -152,7 +155,7 @@ const StepRenderer: React.FC = () => {
       return <YoungChildExacerbationSeverityStep />;
     case 'YOUNG_CHILD_EXACERBATION_PLAN_STEP':
       return <YoungChildExacerbationPlanStep />;
-      
+
     // Severe Asthma Pathway (11-Stage Flow)
     case 'SEVERE_ASTHMA_STAGE_1':
     case 'SEVERE_ASTHMA_STAGE_2':
@@ -167,7 +170,7 @@ const StepRenderer: React.FC = () => {
     case 'SEVERE_ASTHMA_STAGE_11':
       // Differentiate between Training Mode and Patient Care Mode
       if (patientData.activePatientId) {
-          return <PatientSevereAsthmaManager />;
+        return <PatientSevereAsthmaManager />;
       }
       return <SevereAsthmaPathway />;
 
@@ -181,17 +184,17 @@ const App: React.FC = () => {
     <PatientRecordsProvider>
       <PatientDataProvider>
         <MedicationProvider>
-            <UIStateProvider>
+          <UIStateProvider>
             <NavigationProvider>
-                <MainLayout>
+              <MainLayout>
                 <StepRenderer />
-                </MainLayout>
-                <AIAssistantPanel />
-                <GoalsModal />
-                <InfoModal />
-                <PrintProfileModal />
+              </MainLayout>
+              <AIAssistantPanel />
+              <GoalsModal />
+              <InfoModal />
+              <PrintProfileModal />
             </NavigationProvider>
-            </UIStateProvider>
+          </UIStateProvider>
         </MedicationProvider>
       </PatientDataProvider>
     </PatientRecordsProvider>

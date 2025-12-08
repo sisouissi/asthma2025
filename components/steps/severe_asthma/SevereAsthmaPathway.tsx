@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigation } from '../../../contexts/NavigationContext';
 import { StepId } from '../../../types';
 import { ChevronDown, ChevronUp, ArrowLeft, ArrowRight, BookOpen } from 'lucide-react';
@@ -32,22 +32,26 @@ const stages = [
 ];
 
 const StageHeader: React.FC<{ stage: any, isActive: boolean, onClick: () => void }> = ({ stage, isActive, onClick }) => (
-    <div 
-      className={`p-3 rounded-lg cursor-pointer transition-all duration-200 ${
-        isActive ? `${stage.color} text-white shadow-lg` : 'bg-gray-100 hover:bg-gray-200'
-      }`}
-      onClick={onClick}
+    <div
+        className={`p-3 rounded-lg cursor-pointer transition-all duration-200 ${isActive ? `${stage.color} text-white shadow-lg` : 'bg-gray-100 hover:bg-gray-200'
+            }`}
+        onClick={onClick}
     >
-      <div className="flex items-center justify-between">
-        <span className="font-semibold text-sm">Stage {stage.id}: {stage.title}</span>
-        {isActive ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-      </div>
+        <div className="flex items-center justify-between">
+            <span className="font-semibold text-sm">Stage {stage.id}: {stage.title}</span>
+            {isActive ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+        </div>
     </div>
 );
 
 const SevereAsthmaPathway: React.FC = () => {
     const { currentStepId, navigateTo } = useNavigation();
-    
+
+    // Scroll to top when stage changes
+    useEffect(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, [currentStepId]);
+
     const activeStage = stages.find(s => s.stepId === currentStepId);
     const activeStageId = activeStage ? activeStage.id : 1;
 
@@ -61,16 +65,16 @@ const SevereAsthmaPathway: React.FC = () => {
             if (prevStage) navigateTo(prevStage.stepId as StepId);
         }
     };
-    
+
     const handleNextStage = () => {
         if (activeStageId < stages.length) {
-             const nextStage = stages.find(s => s.id === activeStageId + 1);
-             if (nextStage) navigateTo(nextStage.stepId as StepId);
+            const nextStage = stages.find(s => s.id === activeStageId + 1);
+            if (nextStage) navigateTo(nextStage.stepId as StepId);
         }
     };
-    
+
     const renderCurrentStage = () => {
-        switch(currentStepId) {
+        switch (currentStepId) {
             case 'SEVERE_ASTHMA_STAGE_1': return <Stage1 />;
             case 'SEVERE_ASTHMA_STAGE_2': return <Stage2 />;
             case 'SEVERE_ASTHMA_STAGE_3': return <Stage3 />;
@@ -108,33 +112,33 @@ const SevereAsthmaPathway: React.FC = () => {
                         <div className="space-y-2">
                             {stages.map((stage) => (
                                 <StageHeader
-                                key={stage.id}
-                                stage={stage}
-                                isActive={activeStageId === stage.id}
-                                onClick={() => handleStageClick(stage.stepId as StepId)}
+                                    key={stage.id}
+                                    stage={stage}
+                                    isActive={activeStageId === stage.id}
+                                    onClick={() => handleStageClick(stage.stepId as StepId)}
                                 />
                             ))}
                         </div>
-            
+
                         <div className="flex flex-col gap-3 mt-6 pt-4 border-t border-slate-100">
-                        <Button
-                            onClick={handlePreviousStage}
-                            disabled={activeStageId === 1}
-                            variant="secondary"
-                            fullWidth
-                            leftIcon={<ArrowLeft/>}
-                        >
-                            Previous Stage
-                        </Button>
-                        <Button
-                            onClick={handleNextStage}
-                            disabled={activeStageId >= stages.length}
-                            variant="primary"
-                            fullWidth
-                            rightIcon={<ArrowRight/>}
-                        >
-                            Next Stage
-                        </Button>
+                            <Button
+                                onClick={handlePreviousStage}
+                                disabled={activeStageId === 1}
+                                variant="secondary"
+                                fullWidth
+                                leftIcon={<ArrowLeft />}
+                            >
+                                Previous Stage
+                            </Button>
+                            <Button
+                                onClick={handleNextStage}
+                                disabled={activeStageId >= stages.length}
+                                variant="primary"
+                                fullWidth
+                                rightIcon={<ArrowRight />}
+                            >
+                                Next Stage
+                            </Button>
                         </div>
                     </div>
                 </div>

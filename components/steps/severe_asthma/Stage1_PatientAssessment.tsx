@@ -8,7 +8,7 @@ import { User, Heart, Info, ChevronRight, AlertTriangle, Stethoscope, Search, Ac
 const Stage1_PatientAssessment: React.FC = () => {
     const { patientData, updatePatientData } = usePatientData();
     const { navigateTo } = useNavigation();
-    
+
     // Check if we are in Clinical Mode (Active Patient) or Training Mode
     const isClinicalMode = !!patientData.activePatientId;
 
@@ -38,68 +38,144 @@ const Stage1_PatientAssessment: React.FC = () => {
             }
         }
     }, [age, asthmaOnset, updateSevereAsthmaData]);
-    
+
     const isAgeUnder18 = !isNaN(parseInt(age)) && parseInt(age) < 18;
 
     // --- INTERACTIVE QUESTIONNAIRE FOR TRAINING MODE ---
     const [trainingAnswers, setTrainingAnswers] = useState({
         uncontrolled: false,
         highTreatment: false,
-        exacerbations: false
+        exacerbations: false,
+        spirometryConfirmed: false,
+        reversibilityConfirmed: false
     });
 
     const handleTrainingToggle = (field: keyof typeof trainingAnswers) => {
-        setTrainingAnswers(prev => ({ ...prev, [field]: !prev[field] }));
+        setTrainingAnswers(prev => {
+            const newState = { ...prev, [field]: !prev[field] };
+
+            // SYNC TO GLOBAL PATIENT DATA for Simulation Logic
+            const updates: any = { ...patientData };
+
+            // Sync Control
+            if (field === 'uncontrolled') {
+                updates.severeAsthma = {
+                    ...updates.severeAsthma,
+                    symptoms: { ...updates.severeAsthma.symptoms, poorControl: newState.uncontrolled },
+                    assessments: { ...updates.severeAsthma.assessments, actScore: newState.uncontrolled ? 15 : 25 }
+                };
+            }
+
+            // Sync Exacerbations
+            if (field === 'exacerbations') {
+                updates.severeAsthma = {
+                    ...updates.severeAsthma,
+                    symptoms: { ...updates.severeAsthma.symptoms, frequentExacerbations: newState.exacerbations },
+                    basicInfo: { ...updates.severeAsthma.basicInfo, exacerbationsLastYear: newState.exacerbations ? "2" : "0" }
+                };
+            }
+
+            // Sync High Treatment (OCS context + Standard of Care)
+            if (field === 'highTreatment') {
+                updates.severeAsthma = {
+                    ...updates.severeAsthma,
+                    medications: {
+                        ...updates.severeAsthma.medications,
+                        maintenanceOcs: newState.highTreatment,
+                        icsDose: newState.highTreatment ? 'high' : 'medium',
+                        // Assume optimized therapy if this is selected in simulation
+                        // This forces "Severe Asthma" status in PatientDataContext logic
+                        icsLaba: true,
+                        adherence: 'good',
+                        inhalerTechnique: 'correct'
+                    }
+                };
+            }
+
+            updatePatientData(updates);
+            return newState;
+        });
     };
 
     const trainingClassification = (() => {
+        if (!trainingAnswers.spirometryConfirmed || !trainingAnswers.reversibilityConfirmed) {
+            return { text: "Diagnosis Pending (Spirometry Required)", color: "slate" };
+        }
         if ((trainingAnswers.uncontrolled || trainingAnswers.exacerbations) && trainingAnswers.highTreatment) {
             return { text: "Difficult-to-Treat Asthma", color: "orange" };
         }
         if (trainingAnswers.uncontrolled || trainingAnswers.exacerbations) {
             return { text: "Uncontrolled Asthma", color: "amber" };
         }
-        return { text: "Assessment Pending", color: "slate" };
+        return { text: "Controlled / Mild", color: "emerald" };
     })();
 
     return (
         <div>
             {/* 1. DEFINITION & SCOPE (Updated per GINA 2025) */}
+            {/* 1. DEFINITION & SCOPE (Updated per GINA 2025) */}
             <div className="mb-6 p-4 bg-slate-50 border-l-4 border-slate-500 rounded-r-lg shadow-sm">
-                <h3 className="font-bold text-slate-800 flex items-center text-lg">
+                <h3 className="font-bold text-slate-800 flex items-center text-lg mb-3">
                     <Info className="mr-2 text-slate-600" />
-                    Definition: Difficult-to-Treat vs. Severe Asthma
+                    Definitions: Uncontrolled, Difficult-to-Treat & Severe Asthma
                 </h3>
-                <div className="text-sm text-slate-700 mt-2 space-y-2 leading-relaxed">
-                    <p><strong>Difficult-to-treat asthma:</strong> Asthma that is uncontrolled despite GINA Step 4 or 5 treatment (e.g. medium/high dose ICS-LABA or maintenance OCS), or that requires such treatment to maintain control. It does <em>not</em> mean a "difficult patient".</p>
-                    <p><strong>Severe asthma:</strong> A subset of difficult-to-treat asthma. It means asthma that is uncontrolled <em>despite</em> adherence to maximal optimized therapy and management of contributory factors, or that worsens when high-dose treatment is decreased.</p>
-                    <p className="italic text-xs text-slate-500 border-t border-slate-200 pt-1 mt-1">
-                        "Severe asthma" is a retrospective label. Diagnosis can only be confirmed after optimization (Stage 3) and review (Stage 4).
-                    </p>
+                <div className="text-sm text-slate-700 space-y-3 leading-relaxed">
+                    <p>Understanding the definitions starts with the concept of <strong>uncontrolled asthma</strong>, which includes one or both of:</p>
+                    <ul className="list-disc list-inside pl-2 space-y-1">
+                        <li><strong>Poor symptom control</strong> (frequent symptoms or reliever use, activity limited by asthma, night waking due to asthma).</li>
+                        <li><strong>Frequent exacerbations</strong> (≥2/year) requiring OCS, or severe exacerbations (≥1/year) requiring hospitalization.</li>
+                    </ul>
+
+                    <div className="p-3 bg-orange-50 border border-orange-100 rounded-md">
+                        <p><strong>Difficult-to-treat asthma</strong> is asthma that is uncontrolled despite prescribing of medium- or high-dose ICS with a second controller (usually a LABA) or with maintenance OCS, or that requires high-dose treatment to maintain good symptom control and reduce the risk of exacerbations. It does <em>not</em> mean a "difficult patient".</p>
+                        <p className="mt-2 text-xs text-slate-500">In many cases, poor control may be due to modifiable factors such as incorrect inhaler technique, poor adherence, smoking or comorbidities, or an incorrect diagnosis.</p>
+                    </div>
+
+                    <div className="p-3 bg-red-50 border border-red-100 rounded-md">
+                        <p><strong>Severe asthma</strong> is a subset of difficult-to-treat asthma. It means asthma that is uncontrolled <em>despite</em> good adherence to maximal optimized high-dose ICS-LABA treatment and management of contributory factors, or that worsens when high-dose treatment is decreased.</p>
+                        <p className="mt-2 text-xs text-slate-500">
+                            "Severe asthma" is a retrospective label. It is sometimes called "severe refractory asthma", but with the advent of biologic therapies, the word "refractory" is no longer appropriate. Asthma is <strong>not</strong> classified as severe if it markedly improves when contributory factors are addressed.
+                        </p>
+                    </div>
                 </div>
             </div>
 
             {/* --- TRAINING MODE: INTERACTIVE CLASSIFICATION --- */}
             {!isClinicalMode && (
-                <AssessmentCard title="Interactive Classification (Training)" icon={<Activity className="text-violet-600"/>}>
+                <AssessmentCard title="Interactive Classification (Training)" icon={<Activity className="text-violet-600" />}>
                     <p className="text-sm text-slate-600 mb-4">
                         Use this tool to practice classifying patients based on GINA criteria. Select the features present:
                     </p>
                     <div className="space-y-3 mb-4">
-                        <div onClick={() => handleTrainingToggle('uncontrolled')} className="flex items-center p-3 bg-white border rounded cursor-pointer hover:bg-slate-50">
-                            {trainingAnswers.uncontrolled ? <CheckSquare className="text-violet-600 mr-3"/> : <Square className="text-slate-400 mr-3"/>}
-                            <span className="text-sm text-slate-700">Poor Symptom Control (ACQ-5 &gt; 1.5, ACT &lt; 20)</span>
+                        <div className="p-3 bg-slate-50 border border-slate-200 rounded-md mb-2">
+                            <h5 className="text-xs font-bold text-slate-500 uppercase mb-2">1. Confirmation of Diagnosis (Mandatory)</h5>
+                            <div onClick={() => handleTrainingToggle('spirometryConfirmed')} className="flex items-center p-2 cursor-pointer hover:bg-slate-100 rounded">
+                                {trainingAnswers.spirometryConfirmed ? <CheckSquare className="text-teal-600 mr-2" /> : <Square className="text-slate-400 mr-2" />}
+                                <span className="text-sm text-slate-700">Spirometry (FEV1/FVC &lt; LLN)</span>
+                            </div>
+                            <div onClick={() => handleTrainingToggle('reversibilityConfirmed')} className="flex items-center p-2 cursor-pointer hover:bg-slate-100 rounded">
+                                {trainingAnswers.reversibilityConfirmed ? <CheckSquare className="text-teal-600 mr-2" /> : <Square className="text-slate-400 mr-2" />}
+                                <span className="text-sm text-slate-700">Reversibility (≥12% and 200mL)</span>
+                            </div>
                         </div>
-                        <div onClick={() => handleTrainingToggle('exacerbations')} className="flex items-center p-3 bg-white border rounded cursor-pointer hover:bg-slate-50">
-                            {trainingAnswers.exacerbations ? <CheckSquare className="text-violet-600 mr-3"/> : <Square className="text-slate-400 mr-3"/>}
-                            <span className="text-sm text-slate-700">Frequent Exacerbations (≥2/year requiring OCS)</span>
-                        </div>
-                         <div onClick={() => handleTrainingToggle('highTreatment')} className="flex items-center p-3 bg-white border rounded cursor-pointer hover:bg-slate-50">
-                            {trainingAnswers.highTreatment ? <CheckSquare className="text-violet-600 mr-3"/> : <Square className="text-slate-400 mr-3"/>}
-                            <span className="text-sm text-slate-700">Current Rx: Medium/High-dose ICS-LABA or OCS</span>
+
+                        <div className="p-3 bg-slate-50 border border-slate-200 rounded-md">
+                            <h5 className="text-xs font-bold text-slate-500 uppercase mb-2">2. Severity Assessment</h5>
+                            <div onClick={() => handleTrainingToggle('uncontrolled')} className="flex items-center p-2 cursor-pointer hover:bg-slate-100 rounded">
+                                {trainingAnswers.uncontrolled ? <CheckSquare className="text-violet-600 mr-2" /> : <Square className="text-slate-400 mr-2" />}
+                                <span className="text-sm text-slate-700">Poor Symptom Control (ACQ-5 &gt; 1.5, ACT &lt; 20)</span>
+                            </div>
+                            <div onClick={() => handleTrainingToggle('exacerbations')} className="flex items-center p-2 cursor-pointer hover:bg-slate-100 rounded">
+                                {trainingAnswers.exacerbations ? <CheckSquare className="text-violet-600 mr-2" /> : <Square className="text-slate-400 mr-2" />}
+                                <span className="text-sm text-slate-700">Frequent Exacerbations (≥2/year requiring OCS)</span>
+                            </div>
+                            <div onClick={() => handleTrainingToggle('highTreatment')} className="flex items-center p-2 cursor-pointer hover:bg-slate-100 rounded">
+                                {trainingAnswers.highTreatment ? <CheckSquare className="text-violet-600 mr-2" /> : <Square className="text-slate-400 mr-2" />}
+                                <span className="text-sm text-slate-700">Current Rx: Medium/High-dose ICS-LABA or OCS</span>
+                            </div>
                         </div>
                     </div>
-                    
+
                     <div className={`p-4 rounded-lg border-l-4 bg-${trainingClassification.color}-50 border-${trainingClassification.color}-500`}>
                         <h4 className={`font-bold text-${trainingClassification.color}-800`}>Result: {trainingClassification.text}</h4>
                         {trainingClassification.text.includes("Difficult") && (
@@ -111,17 +187,17 @@ const Stage1_PatientAssessment: React.FC = () => {
 
             {/* --- CLINICAL MODE: STREAMLINED SUMMARY --- */}
             {isClinicalMode && (
-                <AssessmentCard title="Imported Clinical Data (Step 5 Assessment)" icon={<ClipboardList className="text-teal-600"/>}>
+                <AssessmentCard title="Imported Clinical Data (Step 5 Assessment)" icon={<ClipboardList className="text-teal-600" />}>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
                         <div className="p-3 bg-slate-50 rounded border border-slate-200">
                             <span className="block text-xs text-slate-500 uppercase font-bold">Exacerbations (1y)</span>
                             <span className="text-lg font-semibold text-slate-800">{severeAsthma.basicInfo.exacerbationsLastYear || '0'}</span>
                         </div>
-                         <div className="p-3 bg-slate-50 rounded border border-slate-200">
+                        <div className="p-3 bg-slate-50 rounded border border-slate-200">
                             <span className="block text-xs text-slate-500 uppercase font-bold">SABA Use (Cans/1y)</span>
                             <span className="text-lg font-semibold text-slate-800">{severeAsthma.basicInfo.sabaUse || '0'}</span>
                         </div>
-                         <div className="p-3 bg-slate-50 rounded border border-slate-200">
+                        <div className="p-3 bg-slate-50 rounded border border-slate-200">
                             <span className="block text-xs text-slate-500 uppercase font-bold">Current Status</span>
                             <span className="text-lg font-semibold text-orange-700">Difficult-to-Treat</span>
                         </div>
@@ -136,11 +212,11 @@ const Stage1_PatientAssessment: React.FC = () => {
             <AssessmentCard title="Patient Demographics & Clinical History" icon={<User />}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <InputField label="Age" type="number" value={age} onChange={(e: any) => updateSevereAsthmaData('basicInfo', 'age', e.target.value)} placeholder="Age in years" />
-                    <SelectField 
-                        label="Asthma Onset" 
-                        value={asthmaOnset} 
-                        onChange={(e: any) => updateSevereAsthmaData('basicInfo', 'asthmaOnset', e.target.value)} 
-                        options={[{ value: 'childhood', label: 'Childhood onset (< 18 years)' }, { value: 'adult', label: 'Adult onset (>=18 years)' }]} 
+                    <SelectField
+                        label="Asthma Onset"
+                        value={asthmaOnset}
+                        onChange={(e: any) => updateSevereAsthmaData('basicInfo', 'asthmaOnset', e.target.value)}
+                        options={[{ value: 'childhood', label: 'Childhood onset (< 18 years)' }, { value: 'adult', label: 'Adult onset (>=18 years)' }]}
                         disabled={isAgeUnder18}
                         note={isAgeUnder18 ? 'Automatically set due to age < 18.' : ''}
                     />
@@ -150,16 +226,16 @@ const Stage1_PatientAssessment: React.FC = () => {
                     <InputField label="SABA Use (canisters/year)" type="number" value={severeAsthma.basicInfo.sabaUse} onChange={(e: any) => updateSevereAsthmaData('basicInfo', 'sabaUse', e.target.value)} placeholder="3 or more/year = high risk" />
                 </div>
                 <div className="mt-4 pt-4 border-t border-slate-200">
-                    <Checkbox 
-                        label="Clinically allergen-driven symptoms (e.g. cat, pollen)" 
-                        checked={severeAsthma.symptoms.allergenDriven} 
-                        onChange={(e: any) => updateSevereAsthmaData('symptoms', 'allergenDriven', e.target.checked)} 
+                    <Checkbox
+                        label="Clinically allergen-driven symptoms (e.g. cat, pollen)"
+                        checked={severeAsthma.symptoms.allergenDriven}
+                        onChange={(e: any) => updateSevereAsthmaData('symptoms', 'allergenDriven', e.target.checked)}
                     />
                 </div>
             </AssessmentCard>
-            
+
             {/* ... (Remaining sections: Confirm Diagnosis, Referral Criteria etc. kept as is) ... */}
-             <AssessmentCard title="1. Confirm Diagnosis & Exclude Differentials" icon={<Stethoscope />}>
+            <AssessmentCard title="1. Confirm Diagnosis & Exclude Differentials" icon={<Stethoscope />}>
                 {/* ... Content from previous update ... */}
                 <div className="p-3 bg-amber-50 border border-amber-200 rounded-md mb-4">
                     <div className="flex items-start">
@@ -170,9 +246,9 @@ const Stage1_PatientAssessment: React.FC = () => {
                     </div>
                 </div>
                 <div className="space-y-4">
-                     <div>
+                    <div>
                         <h4 className="font-semibold text-sm text-slate-700 mb-2 flex items-center">
-                            <Search size={16} className="mr-2 text-indigo-600"/>
+                            <Search size={16} className="mr-2 text-indigo-600" />
                             Are symptoms typically asthma?
                         </h4>
                         <p className="text-xs text-slate-500 mb-2">Check history and exam to rule out mimics:</p>
@@ -185,17 +261,17 @@ const Stage1_PatientAssessment: React.FC = () => {
                 </div>
             </AssessmentCard>
 
-            <AssessmentCard title="Criteria for Early Specialist Referral" icon={<ArrowRight className="text-red-500"/>}>
+            <AssessmentCard title="Criteria for Early Specialist Referral" icon={<ArrowRight className="text-red-500" />}>
                 <p className="text-sm text-slate-600 mb-3">Consider referral to a severe asthma clinic at <strong>any stage</strong> if:</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
-                     <ReferralCheckItem label="Difficulty confirming diagnosis" />
-                     <ReferralCheckItem label="Frequent urgent healthcare utilization" />
-                     <ReferralCheckItem label="Need for frequent or maintenance OCS" />
-                     <ReferralCheckItem label="Suspected occupational asthma" />
-                     <ReferralCheckItem label="Confirmed food allergy / Anaphylaxis history (Risk of death)" />
-                     <ReferralCheckItem label="Symptoms suggestive of cardiac/infective cause" />
-                     <ReferralCheckItem label="Complications (e.g. Bronchiectasis)" />
-                     <ReferralCheckItem label="Multimorbidity present" />
+                    <ReferralCheckItem label="Difficulty confirming diagnosis" />
+                    <ReferralCheckItem label="Frequent urgent healthcare utilization" />
+                    <ReferralCheckItem label="Need for frequent or maintenance OCS" />
+                    <ReferralCheckItem label="Suspected occupational asthma" />
+                    <ReferralCheckItem label="Confirmed food allergy / Anaphylaxis history (Risk of death)" />
+                    <ReferralCheckItem label="Symptoms suggestive of cardiac/infective cause" />
+                    <ReferralCheckItem label="Complications (e.g. Bronchiectasis)" />
+                    <ReferralCheckItem label="Multimorbidity present" />
                 </div>
             </AssessmentCard>
 
@@ -208,7 +284,7 @@ const Stage1_PatientAssessment: React.FC = () => {
                             <p className="text-orange-700 font-medium">
                                 <strong>Status:</strong> Difficult-to-Treat Asthma (Confirmed)
                             </p>
-                             <p className="text-slate-600 text-xs">
+                            <p className="text-slate-600 text-xs">
                                 Note: Diagnosis of "Severe Asthma" can only be confirmed retrospectively after optimization (Stage 3) and review (Stage 4).
                             </p>
                         </div>
@@ -216,13 +292,13 @@ const Stage1_PatientAssessment: React.FC = () => {
                 </div>
 
                 <div className="mt-6 border-t border-slate-300 pt-4">
-                     <Button 
+                    <Button
                         onClick={() => navigateTo('SEVERE_ASTHMA_STAGE_2')}
                         fullWidth
                         size="lg"
                         variant="primary"
                         rightIcon={<ChevronRight />}
-                     >
+                    >
                         Proceed to Risk Factor Assessment (Stage 2)
                     </Button>
                 </div>
@@ -250,21 +326,21 @@ const SelectField: React.FC<any> = ({ label, options, note, ...props }) => (
 );
 
 const Checkbox: React.FC<any> = ({ label, ...props }) => (
-     <label className="flex items-center cursor-pointer text-sm mb-2">
+    <label className="flex items-center cursor-pointer text-sm mb-2">
         <input type="checkbox" className="mr-2 h-4 w-4 rounded border-gray-300 text-sky-600 focus:ring-sky-500" {...props} />
         {label}
     </label>
 );
 
-const ReferralCheckItem: React.FC<{label: string}> = ({ label }) => {
+const ReferralCheckItem: React.FC<{ label: string }> = ({ label }) => {
     const [checked, setChecked] = useState(false);
     return (
-        <div 
+        <div
             className={`flex items-start p-2 rounded cursor-pointer border ${checked ? 'bg-red-50 border-red-200' : 'bg-white border-slate-200'}`}
             onClick={() => setChecked(!checked)}
         >
             <div className={`mr-2 mt-0.5 ${checked ? 'text-red-500' : 'text-slate-300'}`}>
-                {checked ? <CheckSquare size={16}/> : <Square size={16}/>}
+                {checked ? <CheckSquare size={16} /> : <Square size={16} />}
             </div>
             <span className={`${checked ? 'text-red-800 font-medium' : 'text-slate-600'}`}>{label}</span>
         </div>

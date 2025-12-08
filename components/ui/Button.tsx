@@ -22,11 +22,11 @@ const Button: React.FC<ButtonProps> = ({
 }) => {
   // Modern button base: rounded-xl, font-medium, smooth transitions, subtle active state
   const baseStyles = "font-medium rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 inline-flex items-center disabled:opacity-50 disabled:cursor-not-allowed active:scale-95";
-  
+
   let variantStyles = '';
   switch (variant) {
-    case 'primary': // Indigo
-      variantStyles = 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-200 focus:ring-indigo-500 border border-transparent';
+    case 'primary': // Custom GINA Blue #004b85
+      variantStyles = 'bg-[#004b85] hover:bg-[#003865] text-white shadow-md shadow-[#004b85]/30 focus:ring-[#004b85]/50 border border-transparent';
       break;
     case 'secondary': // Slate/White
       variantStyles = 'bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 shadow-sm focus:ring-slate-200';
@@ -43,8 +43,8 @@ const Button: React.FC<ButtonProps> = ({
     case 'info': // Sky
       variantStyles = 'bg-sky-500 hover:bg-sky-600 text-white shadow-md shadow-sky-200 focus:ring-sky-400 border border-transparent';
       break;
-    case 'violet': // Violet
-      variantStyles = 'bg-violet-600 hover:bg-violet-700 text-white shadow-md shadow-violet-200 focus:ring-violet-500 border border-transparent';
+    case 'violet': // Navy (GINA Header)
+      variantStyles = 'bg-blue-900 hover:bg-blue-950 text-white shadow-md shadow-blue-200 focus:ring-blue-700 border border-transparent';
       break;
     case 'yellow': // Yellow (High viz)
       variantStyles = 'bg-yellow-400 hover:bg-yellow-500 text-slate-900 shadow-md shadow-yellow-200 focus:ring-yellow-300 border border-transparent';
@@ -59,7 +59,7 @@ const Button: React.FC<ButtonProps> = ({
       variantStyles = 'bg-orange-500 hover:bg-orange-600 text-white shadow-md shadow-orange-200 focus:ring-orange-400 border border-transparent';
       break;
     case 'ghost':
-      variantStyles = 'bg-transparent hover:bg-slate-100 text-slate-600 hover:text-indigo-600 focus:ring-indigo-500 shadow-none border border-transparent';
+      variantStyles = 'bg-transparent hover:bg-slate-100 text-slate-600 hover:text-[#004b85] focus:ring-[#004b85]/50 shadow-none border border-transparent';
       break;
   }
 
@@ -89,26 +89,26 @@ const Button: React.FC<ButtonProps> = ({
 
   let clonedLeftIcon = null;
   if (leftIcon) {
-      const iconProps: { size: number; className: string; } = {
-          size: iconSize,
-          className: 'mr-2 -ml-0.5',
-      };
-      if ((leftIcon.props as any).className) {
-        iconProps.className += ' ' + (leftIcon.props as any).className;
-      }
-      clonedLeftIcon = React.cloneElement(leftIcon as React.ReactElement<any>, iconProps);
+    const iconProps: { size: number; className: string; } = {
+      size: iconSize,
+      className: 'mr-2 -ml-0.5',
+    };
+    if ((leftIcon.props as any).className) {
+      iconProps.className += ' ' + (leftIcon.props as any).className;
+    }
+    clonedLeftIcon = React.cloneElement(leftIcon as React.ReactElement<any>, iconProps);
   }
 
   let clonedRightIcon = null;
   if (rightIcon) {
-      const iconProps: { size: number; className: string; } = {
-          size: iconSize,
-          className: 'ml-2 -mr-0.5',
-      };
-      if ((rightIcon.props as any).className) {
-        iconProps.className += ' ' + (rightIcon.props as any).className;
-      }
-      clonedRightIcon = React.cloneElement(rightIcon as React.ReactElement<any>, iconProps);
+    const iconProps: { size: number; className: string; } = {
+      size: iconSize,
+      className: 'ml-2 -mr-0.5',
+    };
+    if ((rightIcon.props as any).className) {
+      iconProps.className += ' ' + (rightIcon.props as any).className;
+    }
+    clonedRightIcon = React.cloneElement(rightIcon as React.ReactElement<any>, iconProps);
   }
 
   const finalClassName = [baseStyles, variantStyles, sizeStyles, widthStyles, justifyClass, className].filter(Boolean).join(' ');
