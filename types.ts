@@ -1,8 +1,11 @@
 export type AgeGroup = 'adult' | 'child' | 'youngChild';
 
-export type StepId = 
+export type StepId =
   | 'INITIAL_STEP'
   | 'PATIENT_DASHBOARD'
+  | 'PATIENT_DASHBOARD_LIST'
+  | 'PATIENT_DASHBOARD_CREATE'
+  | 'PATIENT_DASHBOARD_DETAILS'
   | 'CONSULTATION_SUMMARY_STEP'
   | 'DIAGNOSIS_PENDING_STEP'
   | 'DIAGNOSIS_PROBABILITY_STEP'
@@ -57,8 +60,8 @@ export type ControlLevel = 'wellControlled' | 'partlyControlled' | 'uncontrolled
 
 // Test result history
 export interface TestResult {
-    date: string; // ISO string
-    score: number;
+  date: string; // ISO string
+  score: number;
 }
 
 // Control Assessment detailed answers
@@ -71,14 +74,14 @@ export interface ControlAnswers {
 
 // Phenotype Data
 export interface PhenotypeData {
-    allergicHistory: boolean | null; // Eczema, allergic rhinitis, food/drug allergy
-    familyHistory: boolean | null;
-    childhoodOnset: boolean | null;
-    coughVariant: boolean | null; // Cough is the only symptom
-    obesity: boolean | null;
-    worseAtWork: boolean | null; // Occupational
-    persistentLimitation: boolean | null; // Airflow limitation despite treatment
-    identifiedPhenotype: string | null; // The logic-derived conclusion
+  allergicHistory: boolean | null; // Eczema, allergic rhinitis, food/drug allergy
+  familyHistory: boolean | null;
+  childhoodOnset: boolean | null;
+  coughVariant: boolean | null; // Cough is the only symptom
+  obesity: boolean | null;
+  worseAtWork: boolean | null; // Occupational
+  persistentLimitation: boolean | null; // Airflow limitation despite treatment
+  identifiedPhenotype: string | null; // The logic-derived conclusion
 }
 
 // Diagnosis Symptoms (Probability Assessment)
@@ -99,46 +102,46 @@ export interface DiagnosisSymptoms {
 
 // NEW: Detailed GINA Box 1-2 Diagnosis Criteria
 export interface GinaDiagnosisCriteria {
-    // 1. History of typical symptoms
-    symptoms: {
-        wheeze: boolean;
-        sob: boolean; // Shortness of breath
-        chestTightness: boolean;
-        cough: boolean;
-    };
-    // Pattern characteristics
-    patterns: {
-        variable: boolean; // Vary over time and in intensity
-        nightWaking: boolean; // Worse at night or on waking
-        triggers: boolean; // Triggered by exercise, laughter, allergens, cold
-        viralWorsening: boolean; // Worsen with viral infections
-    };
-    // 2. Confirmed Variable Expiratory Airflow
-    airflowLimitation: {
-        bdReversibility: boolean; // Positive Bronchodilator Reversibility
-        pefVariability: boolean; // Excessive variability in twice-daily PEF
-        treatmentTrial: boolean; // Increase after 4 weeks of anti-inflammatory
-        challengeTest: boolean; // Positive bronchial provocation
-        visitVariation: boolean; // Excessive variation between visits
-    };
-    // 3. Supportive Biomarkers (Type 2)
-    biomarkers: {
-        feNo: string; // ppb
-        bloodEosinophils: string; // cells/muL
-    };
+  // 1. History of typical symptoms
+  symptoms: {
+    wheeze: boolean;
+    sob: boolean; // Shortness of breath
+    chestTightness: boolean;
+    cough: boolean;
+  };
+  // Pattern characteristics
+  patterns: {
+    variable: boolean; // Vary over time and in intensity
+    nightWaking: boolean; // Worse at night or on waking
+    triggers: boolean; // Triggered by exercise, laughter, allergens, cold
+    viralWorsening: boolean; // Worsen with viral infections
+  };
+  // 2. Confirmed Variable Expiratory Airflow
+  airflowLimitation: {
+    bdReversibility: boolean; // Positive Bronchodilator Reversibility
+    pefVariability: boolean; // Excessive variability in twice-daily PEF
+    treatmentTrial: boolean; // Increase after 4 weeks of anti-inflammatory
+    challengeTest: boolean; // Positive bronchial provocation
+    visitVariation: boolean; // Excessive variation between visits
+  };
+  // 3. Supportive Biomarkers (Type 2)
+  biomarkers: {
+    feNo: string; // ppb
+    bloodEosinophils: string; // cells/muL
+  };
 }
 
 // Diagnosis on Treatment (GINA Box 1-4)
 export interface OnTreatmentDiagnosis {
-    status: 'confirmed_variable' | 'symptoms_no_variable' | 'no_symptoms_normal' | null;
-    fev1_percent: string;
+  status: 'confirmed_variable' | 'symptoms_no_variable' | 'no_symptoms_normal' | null;
+  fev1_percent: string;
 }
 
 // Initial Assessment Answers (for storing Q&A)
 export interface InitialAssessmentAnswers {
-    symptomFrequency: string;
-    nightWaking: string;
-    severePresentation: boolean;
+  symptomFrequency: string;
+  nightWaking: string;
+  severePresentation: boolean;
 }
 
 
@@ -158,8 +161,8 @@ export type ChildPathway = 'track1' | 'track2'; // Track 1: MART, Track 2: Class
 
 // Young Child (<=5) specific types
 export type YoungChildSymptomPattern =
-  | 'infrequentViralWheeze' 
-  | 'persistentAsthmaOrFrequentWheeze'; 
+  | 'infrequentViralWheeze'
+  | 'persistentAsthmaOrFrequentWheeze';
 
 export type YoungChildGinaSteps = 1 | 2 | 3 | 4;
 // Identifies the chosen treatment strategy within a GINA step, 'preferred' or an alternative's ID.
@@ -175,119 +178,126 @@ export type ExacerbationSeverity = 'mildModerate' | 'severe';
 
 // --- Prescription Types ---
 export interface Medication {
-    id: string;
-    brandName: string;
-    genericName: string;
-    defaultDosage?: string;
+  id: string;
+  brandName: string;
+  genericName: string;
+  defaultDosage?: string;
 }
 
 export interface PrescriptionItem {
-    id: string;
-    medicationId: string;
-    medicationName: string; // Store name denormalized in case med is deleted/changed
-    instructions: string; // e.g. "2 puffs morning and evening"
-    duration: string; // e.g. "3 months"
+  id: string;
+  medicationId: string;
+  medicationName: string; // Store name denormalized in case med is deleted/changed
+  instructions: string; // e.g. "2 puffs morning and evening"
+  duration: string; // e.g. "3 months"
 }
 
 // --- Severe Asthma Data Structure (New 11-stage flow) ---
 export interface OptimizationPlan {
-    dateInitiated: string;
-    interventions: string[];
-    followUpDate: string | null;
-    comorbidityPlan?: string; // Added for Stage 5
+  dateInitiated: string;
+  interventions: string[];
+  followUpDate: string | null;
+  comorbidityPlan?: string; // Added for Stage 5
 }
 
 export interface SevereAsthmaBasicInfo {
-    age: string;
-    diagnosis: 'unconfirmed' | 'confirmed';
-    asthmaOnset: 'childhood' | 'adult';
-    exacerbationsLastYear: string;
-    hospitalizationsLastYear: string;
-    sabaUse: string;
+  age: string;
+  diagnosis: 'unconfirmed' | 'confirmed';
+  asthmaOnset: 'childhood' | 'adult';
+  exacerbationsLastYear: string;
+  hospitalizationsLastYear: string;
+  sabaUse: string;
 }
 
 export interface SevereAsthmaSymptoms {
-    poorControl: boolean;
-    frequentExacerbations: boolean;
-    nightWaking: boolean;
-    activityLimitation: boolean;
-    frequentSabaUse: boolean;
-    allergenDriven: boolean;
+  poorControl: boolean;
+  frequentExacerbations: boolean;
+  nightWaking: boolean;
+  activityLimitation: boolean;
+  frequentSabaUse: boolean;
+  allergenDriven: boolean;
 }
 
 export interface SevereAsthmaMedications {
-    icsLaba: boolean;
-    icsDose: 'low' | 'medium' | 'high';
-    ocs: boolean;
-    maintenanceOcs: boolean;
-    ocsDose: string;
-    adherence: 'good' | 'suboptimal' | 'poor' | 'unknown';
-    inhalerTechnique: 'correct' | 'incorrect' | 'unknown';
-    mart: boolean;
-    lama: boolean;
-    ltra: boolean;
-    azithromycin: boolean;
-    biologicsAvailable: 'yes' | 'no' | null;
+  icsLaba: boolean;
+  icsDose: 'low' | 'medium' | 'high';
+  ocs: boolean;
+  maintenanceOcs: boolean;
+  ocsDose: string;
+  adherence: 'good' | 'suboptimal' | 'poor' | 'unknown';
+  inhalerTechnique: 'correct' | 'incorrect' | 'unknown';
+  mart: boolean;
+  lama: boolean;
+  ltra: boolean;
+  azithromycin: boolean;
+  biologicsAvailable: 'yes' | 'no' | null;
 }
 
 export interface SevereAsthmaBiomarkers {
-    bloodEosinophils: string;
-    feNo: string;
-    sputumEosinophils: string;
-    totalIgE: string;
-    specificIgE: boolean;
-    skinPrickTest: boolean;
-    fev1: string;
-    fev1Predicted: string;
+  bloodEosinophils: string;
+  feNo: string;
+  sputumEosinophils: string;
+  totalIgE: string;
+  specificIgE: boolean;
+  skinPrickTest: boolean;
+  fev1: string;
+  fev1Predicted: string;
 }
 
 export interface SevereAsthmaInvestigations {
-    chestXray: boolean;
-    hrct: boolean;
-    allergyTesting: boolean;
-    boneDensity: boolean;
-    parasiteScreen: boolean;
-    cardiacAssessment: boolean;
+  chestXray: boolean;
+  hrct: boolean;
+  allergyTesting: boolean;
+  boneDensity: boolean;
+  parasiteScreen: boolean;
+  cardiacAssessment: boolean;
 }
 
 export interface SevereAsthmaPatientData {
-    basicInfo: SevereAsthmaBasicInfo;
-    symptoms: SevereAsthmaSymptoms;
-    medications: SevereAsthmaMedications;
-    biomarkers: SevereAsthmaBiomarkers;
-    comorbidities: string[];
-    riskFactors: string[];
-    investigations: SevereAsthmaInvestigations;
-    status?: 'screening' | 'optimizing' | 'controlled_on_optimization' | 'addressing_factors' | 'confirmed_severe' | 'rejected_severe' | 'biologic_trial' | 'biologic_failure' | null;
-    optimizationPlan?: OptimizationPlan;
-    selectedBiologic?: string; 
-    biologicResponse?: 'good' | 'partial' | 'no' | null;
+  basicInfo: SevereAsthmaBasicInfo;
+  symptoms: SevereAsthmaSymptoms;
+  medications: SevereAsthmaMedications;
+  biomarkers: SevereAsthmaBiomarkers;
+  comorbidities: string[];
+  riskFactors: string[];
+  investigations: SevereAsthmaInvestigations;
+  status?: 'screening' | 'optimizing' | 'controlled_on_optimization' | 'addressing_factors' | 'confirmed_severe' | 'rejected_severe' | 'biologic_trial' | 'biologic_failure' | null;
+  optimizationPlan?: OptimizationPlan;
+  selectedBiologic?: string;
+  biologicResponse?: 'good' | 'partial' | 'no' | null;
 }
 
 export interface SevereAsthmaAssessmentResults {
-    difficultToTreat: boolean;
-    severeAsthma: boolean;
-    type2Inflammation: boolean;
-    eligibleForBiologics: boolean;
+  difficultToTreat: boolean;
+  severeAsthma: boolean;
+  type2Inflammation: boolean;
+  eligibleForBiologics: boolean;
 }
 
 // --- Patient Records Types ---
 export interface ConsultationRecord {
-    id: string;
-    date: string;
-    data: PatientData;
-    summary?: string;
+  id: string;
+  date: string;
+  data: PatientData;
+  summary?: string;
+}
+
+export interface AIReport {
+  id: string;
+  date: string;
+  content: string;
 }
 
 export interface PatientProfile {
-    id: string;
-    lastName: string;
-    firstName: string;
-    dateOfBirth: string;
-    fileNumber: string;
-    treatingPhysician: string;
-    consultations: ConsultationRecord[];
-    createdAt: string;
+  id: string;
+  lastName: string;
+  firstName: string;
+  dateOfBirth: string;
+  fileNumber: string;
+  treatingPhysician: string;
+  consultations: ConsultationRecord[];
+  aiSummaries?: AIReport[];
+  createdAt: string;
 }
 
 
@@ -300,10 +310,10 @@ export interface PatientData {
   age: string | null; // e.g., "12+ years", "6-11 years", "<=5 years"
   ageGroup: AgeGroup | null;
   diagnosisConfirmed: boolean | null;
-  
+
   // New Diagnosis Probability Data (Symptom checking)
   diagnosisSymptoms: DiagnosisSymptoms;
-  
+
   // New GINA Box 1-2 Criteria (Detailed Confirmation)
   isOnMaintenanceTreatment: boolean;
   onTreatmentDiagnosis: OnTreatmentDiagnosis;
@@ -335,13 +345,13 @@ export interface PatientData {
   // Young Child (<=5) specific
   youngChild_symptomPattern: YoungChildSymptomPattern | null;
   youngChild_currentGinaStep: YoungChildGinaSteps | null;
-  youngChild_currentTreatmentStrategy: YoungChildTreatmentStrategyKey | null; 
+  youngChild_currentTreatmentStrategy: YoungChildTreatmentStrategyKey | null;
   youngChild_diagnosisCriteria: YoungChildDiagnosisCriteria | null;
   youngChild_controlLevel: ControlLevel | null;
   youngChild_controlAssessmentAnswers: ControlAnswers | null;
   youngChild_riskFactors: string[];
   youngChild_reviewReminderDate: string | null;
-  
+
   // Common for exacerbations
   exacerbationSeverity: ExacerbationSeverity | null;
 
@@ -380,17 +390,17 @@ export interface ChildTreatmentOptions {
 }
 
 export interface YoungChildAlternativeTreatment extends TreatmentDetail {
-    id: string;
+  id: string;
 }
 
 export interface YoungChildStepTreatment {
-    stepDescription: string;
-    preferred: TreatmentDetail;
-    alternatives?: YoungChildAlternativeTreatment[];
+  stepDescription: string;
+  preferred: TreatmentDetail;
+  alternatives?: YoungChildAlternativeTreatment[];
 }
 
 export interface YoungChildTreatmentOptions {
-    [key: number]: YoungChildStepTreatment;
+  [key: number]: YoungChildStepTreatment;
 }
 
 // AI Chat Interface
