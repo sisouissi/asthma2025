@@ -6,10 +6,11 @@ import Button from '../ui/Button';
 interface ClinicalSummaryCardProps {
     patient: PatientProfile;
     annualExacerbations: number;
+    isDifficultToTreat?: boolean;
     onGenerate: (patient: PatientProfile, e: React.MouseEvent) => void;
 }
 
-const ClinicalSummaryCard: React.FC<ClinicalSummaryCardProps> = ({ patient, annualExacerbations, onGenerate }) => {
+const ClinicalSummaryCard: React.FC<ClinicalSummaryCardProps> = ({ patient, annualExacerbations, isDifficultToTreat, onGenerate }) => {
     // Get latest consultation for clinical metrics (Ensure sorted by date desc)
     const latestConsultation = React.useMemo(() => {
         if (!patient.consultations || patient.consultations.length === 0) return null;
@@ -98,6 +99,16 @@ const ClinicalSummaryCard: React.FC<ClinicalSummaryCardProps> = ({ patient, annu
                     </span>
                 )}
             </div>
+
+            {/* Difficult-to-Treat Alert */}
+            {isDifficultToTreat && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-100 rounded-lg flex items-start gap-2">
+                    <AlertTriangle size={16} className="text-red-600 mt-0.5 shrink-0" />
+                    <div>
+                        <p className="text-sm font-bold text-red-700">Check for Difficult-to-treat asthma</p>
+                    </div>
+                </div>
+            )}
 
             {latestConsultation ? (
                 <div className="space-y-4">

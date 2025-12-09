@@ -743,6 +743,7 @@ const PatientDashboard: React.FC = () => {
                             <ClinicalSummaryCard
                                 patient={selectedPatient}
                                 annualExacerbations={getAnnualExacerbations(selectedPatient)}
+                                isDifficultToTreat={getPatientAlerts(selectedPatient)}
                                 onGenerate={handleOpenSummary}
                             />
                         )}
