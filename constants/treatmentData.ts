@@ -2,41 +2,43 @@
 import { AdultTreatmentOptions, ChildTreatmentOptions, YoungChildTreatmentOptions, TreatmentDetail } from '../types';
 
 export const adultTreatments: AdultTreatmentOptions = {
-  pathway1: { // Preferred: ICS-formoterol as reliever
-    1: { 
+  pathway1: { // Preferred: ICS-formoterol as reliever (Adults & Adolescents 12+)
+    1: {
       name: "As-needed low-dose ICS-formoterol (AIR therapy)",
       reliever: "Low dose ICS-formoterol (e.g., budesonide/formoterol 200/6 mcg) as needed for symptoms.",
       controller: "The reliever provides the anti-inflammatory treatment. No daily controller is prescribed.",
       keyPoints: ["This is Anti-Inflammatory Reliever (AIR) therapy.", "Significantly reduces the risk of severe exacerbations compared to SABA alone.", "A single inhaler simplifies treatment."],
-      notes: ["Maximum recommended total daily dose is 12 inhalations (72 mcg of formoterol).", "Patient education on this new strategy is crucial."]
+      notes: ["Maximum recommended total daily dose is 12 inhalations (72 mcg of formoterol).", "Patient education on this new strategy is crucial.", "For adults (18+), BDP-formoterol 100/6 is also an option (Max 8 puffs/day)."]
     },
-    2: { 
+    2: {
       name: "As-needed low-dose ICS-formoterol (AIR therapy)",
       reliever: "Low dose ICS-formoterol as needed for symptoms.",
       controller: "The reliever provides the anti-inflammatory treatment. No daily controller is prescribed.",
       keyPoints: ["This strategy is for patients who would otherwise be on daily low-dose ICS.", "Still reduces exacerbation risk compared to SABA-based regimens."],
       notes: ["Maximum recommended total daily dose is 12 inhalations (72 mcg of formoterol)."]
     },
-    3: { 
+    3: {
       name: "Low-dose ICS-formoterol MART",
       reliever: "Low dose ICS-formoterol as needed.",
-      controller: "Low dose ICS-formoterol as Maintenance And Reliever Therapy (MART).",
+      controller: "Low dose ICS-formoterol as Maintenance And Reliever Therapy (MART) - 1 inhalation twice (or once) daily.",
       keyPoints: ["Uses a single inhaler for both daily maintenance (e.g., 1 puff BID) and symptom relief.", "Reduces severe exacerbations compared to fixed-dose ICS-LABA + SABA."],
       notes: ["Ensure patient understands MART is for both scheduled and as-needed use. Maximum 12 total inhalations/day."]
     },
-    4: { 
+    4: {
       name: "Medium-dose ICS-formoterol MART",
       reliever: "Low dose ICS-formoterol as needed (as part of MART).",
       controller: "Medium dose ICS-formoterol as MART (e.g., 2 inhalations BID).",
       keyPoints: ["For patients uncontrolled on low-dose MART despite good adherence.", "Keeps the benefits of single inhaler MART regimen."],
       additional: ["Consider adding on LAMA (e.g., tiotropium) for further symptom control if needed before stepping up to Step 5."],
-      referral: "Refer for specialist assessment to consider Step 5 options if control is not achieved."
+      referral: "Refer for specialist assessment to consider Step 5 options if control is not achieved.",
+      notes: ["Maximum recommended total daily dose is 12 inhalations (72 mcg of formoterol)."]
     },
-    5: { 
+    5: {
       name: "Step 5: Specialist Assessment and Add-on Treatments",
       reliever: "Low dose ICS-formoterol as needed (if MART is continued).",
-      controller: "High dose ICS-formoterol MART, plus add-on therapies.",
+      controller: "Refer for expert assessment, phenotyping, and add-on therapy.",
       additional: [
+        "Combination high-dose ICS-LABA (trial for 3-6 months).",
         "Add LAMA (Long-Acting Muscarinic Antagonist).",
         "Targeted biologic therapies (anti-IgE, anti-IL5/5R, anti-IL4R, anti-TSLP) after phenotyping.",
         "Consider bronchial thermoplasty for selected patients.",
@@ -44,38 +46,39 @@ export const adultTreatments: AdultTreatmentOptions = {
       ],
       keyPoints: ["This step requires specialist assessment and management for phenotyping and biologic selection.", "Goal is to improve control and minimize OCS need."],
       referral: "Essential for in-depth assessment, phenotyping, and initiation of Step 5 treatments.",
+      notes: ["If a patient treated with medium-dose MART requires addition of biologic therapy, do NOT switch to conventional ICS-LABA + SABA."]
     }
   },
   pathway2: { // Alternative: SABA reliever + other controller(s)
-    1: { 
+    1: {
       name: "ICS taken whenever SABA is taken",
       reliever: "SABA as needed.",
       controller: "Take low dose ICS whenever SABA is taken.",
       keyPoints: ["For patients with infrequent symptoms (less than twice a month) AND no exacerbation risk factors.", "Reduces risk of severe exacerbations compared to SABA alone."],
       notes: ["Requires patient to carry and use two separate inhalers, or a combination product if available."]
     },
-    2: { 
+    2: {
       name: "Daily low dose ICS + SABA as needed",
       reliever: "SABA as needed.",
       controller: "Daily low dose ICS maintenance.",
       additional: ["Daily LTRA is an alternative, but less effective than ICS for preventing exacerbations."],
       keyPoints: ["The cornerstone of maintenance therapy. Adherence is critical."],
     },
-    3: { 
+    3: {
       name: "Daily low dose ICS-LABA + SABA as needed",
       reliever: "SABA as needed.",
       controller: "Daily low dose ICS-LABA combination inhaler.",
       additional: ["Alternatively, increase to medium dose ICS alone (less effective for many patients).", "Low dose ICS + LTRA is another less effective alternative."],
       keyPoints: ["Adding a LABA improves symptoms and lung function, and reduces exacerbations compared to increasing ICS dose alone for most patients."],
     },
-    4: { 
+    4: {
       name: "Daily medium dose ICS-LABA + SABA as needed",
       reliever: "SABA as needed.",
       controller: "Daily medium dose ICS-LABA.",
       additional: ["Consider adding on LAMA (e.g., tiotropium in a separate inhaler or as part of a triple therapy inhaler)."],
       referral: "Refer for specialist assessment if control is not achieved or to consider Step 5 options."
     },
-    5: { 
+    5: {
       name: "Specialist referral + High dose ICS-LABA +/- options",
       reliever: "SABA as needed.",
       controller: "High dose ICS-LABA.",
@@ -91,42 +94,42 @@ export const adultTreatments: AdultTreatmentOptions = {
 
 export const childTreatments: ChildTreatmentOptions = { // For children 6-11 years
   track1: { // Track 1: MART with ICS-formoterol (Budesonide/Formoterol 100/6, 80/4.5 delivered dose)
-    3: { 
+    3: {
       name: "Low dose ICS-formoterol MART",
       reliever: "Low dose ICS-formoterol (e.g., Bud/Form 100/6) 1 inhalation as needed.",
       controller: "Low dose ICS-formoterol maintenance (1 inhalation once or twice daily) plus as-needed (MART).",
       keyPoints: ["MART is a preferred option at Step 3.", "Simplifies treatment to a single inhaler."],
       notes: ["Maximum 8 total inhalations per day of Bud/Form 100/6 (GINA 2025, Box 4-8)."]
     },
-    4: { 
+    4: {
       name: "Medium dose ICS-formoterol MART",
       reliever: "Low dose ICS-formoterol (e.g., Bud/Form 100/6) 1 inhalation as needed.",
-      controller: "Increased maintenance dose: Bud/Form 100/6, 2 inhalations twice daily, plus as-needed (MART). This is a medium dose of ICS.",
+      controller: "Increased maintenance dose: Bud/Form 100/6, 1 inhalation twice daily, plus as-needed (MART). This is a medium dose of ICS.",
       referral: "Referral for expert advice is an alternative to increasing the dose.",
       notes: ["Maximum 8 total inhalations per day. Specialist consultation is strongly advised."]
     }
   },
   track2: { // Track 2: SABA reliever + other controller
-    1: { 
+    1: {
       name: "ICS taken whenever SABA is taken",
       reliever: "SABA as needed (pMDI + spacer).",
       controller: "Low dose ICS taken whenever SABA is used.",
       keyPoints: ["This is the preferred controller at Step 1.", "Reduces the risk of severe exacerbations compared to SABA alone."]
     },
-    2: { 
+    2: {
       name: "Daily low dose ICS",
       reliever: "SABA as needed (pMDI + spacer).",
       controller: "Daily low dose ICS maintenance.",
       keyPoints: ["This is the preferred controller at Step 2."],
       additional: ["Daily LTRA is an alternative, but is less effective."]
     },
-    3: { 
+    3: {
       name: "Medium dose ICS OR Low dose ICS-LABA",
       reliever: "SABA as needed (pMDI + spacer).",
       controller: "Increase to medium dose ICS, OR add a LABA to maintain low dose ICS.",
       keyPoints: ["Choose based on patient assessment and preference. ICS-LABA may provide better symptom control for some."]
     },
-    4: { 
+    4: {
       name: "Referral, or Medium dose ICS-LABA",
       reliever: "SABA as needed (pMDI + spacer).",
       controller: "Medium dose ICS-LABA.",
@@ -273,7 +276,7 @@ export const exacerbationPlanDetails = {
     }
   },
   child: { // 6-11 years
-     mildModerateAtHome: {
+    mildModerateAtHome: {
       title: "Management of Mild-Moderate Exacerbation (Child 6-11y)",
       steps: [
         "Reliever: Give 2-4 puffs of SABA (pMDI + spacer) every 20 minutes for up to 1 hour.",
@@ -291,14 +294,14 @@ export const exacerbationPlanDetails = {
     },
     severeInER: {
       title: "Management of Severe Exacerbation - Emergency Care (Child 6-11y)",
-       keyTreatments: [
+      keyTreatments: [
         "Oxygen: Titrate to maintain SaO2 greater than 94%.",
         "Bronchodilators: Inhaled SABA (4-10 puffs via spacer) + Ipratropium Bromide (2-4 puffs), which can be repeated every 20 minutes for the first hour.",
         "Systemic Corticosteroids: Administer oral prednisolone promptly (1-2 mg/kg, max 40mg). IV is generally not superior if child can take oral.",
         "Consider IV magnesium for severe cases with poor initial response. IV SABA is for ICU setting only."
       ],
-       monitoring: ["Continuous monitoring of oxygen saturation, respiratory rate, heart rate, and work of breathing (retractions)."],
-       notes: "Hospital admission is required if there is poor or transient response to initial treatment. See GINA 2025, Box 9-4."
+      monitoring: ["Continuous monitoring of oxygen saturation, respiratory rate, heart rate, and work of breathing (retractions)."],
+      notes: "Hospital admission is required if there is poor or transient response to initial treatment. See GINA 2025, Box 9-4."
     }
   },
   youngChild: { // <= 5 years
@@ -309,7 +312,7 @@ export const exacerbationPlanDetails = {
         "Assess Response: If symptoms improve and relief lasts more than 3 hours, continue SABA 2 puffs every 4-6 hours as needed for 1-2 days. If response is poor, seek urgent care.",
         "Contact Doctor: Parents should inform their doctor of the episode. OCS are not usually initiated by parents at home but may be prescribed after assessment."
       ],
-       whenToSeekUrgentHelp: [
+      whenToSeekUrgentHelp: [
         "Symptoms worsen or do not improve after 1 hour of initial SABA treatment.",
         "Child is too breathless to feed, talk or cry.",
         "Shows signs of severe respiratory distress (retractions, nasal flaring, grunting).",
@@ -319,7 +322,7 @@ export const exacerbationPlanDetails = {
     },
     severeInER: {
       title: "Management of Severe Wheezing Episode - Emergency Care (Child <=5y)",
-       keyTreatments: [
+      keyTreatments: [
         "Oxygen: Administer to maintain SaO2 greater than 94%.",
         "Bronchodilators: Inhaled SABA (4-6 puffs via spacer) repeated every 20 minutes, with ipratropium bromide for moderate/severe episodes.",
         "Systemic Corticosteroids: Prednisolone 1-2 mg/kg (max 20mg for 0-2y; 30mg for 3-5y) for 3-5 days is recommended for most episodes treated in emergency care."
