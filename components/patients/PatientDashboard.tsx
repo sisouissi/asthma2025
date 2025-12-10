@@ -307,20 +307,20 @@ const PatientDashboard: React.FC = () => {
         setConfirmPinInput(val);
     };
 
-    // Auto-submit unlock when 4 digits are entered
-    useEffect(() => {
-        if (hasPin && pinInput.length === 4) {
-            const storedPin = localStorage.getItem('gina_app_pin');
-            if (pinInput === storedPin) {
-                authenticate();
-                setAuthError('');
-            } else {
-                setAuthError("Incorrect PIN.");
-                setPinInput('');
-                setTimeout(() => pinInputRef.current?.focus(), 100);
-            }
-        }
-    }, [pinInput, hasPin, authenticate]);
+    // Removed auto-submit to enforce manual entry and prevent browser autofill issues
+    // useEffect(() => {
+    //     if (hasPin && pinInput.length === 4) {
+    //         const storedPin = localStorage.getItem('gina_app_pin');
+    //         if (pinInput === storedPin) {
+    //             authenticate();
+    //             setAuthError('');
+    //         } else {
+    //             setAuthError("Incorrect PIN.");
+    //             setPinInput('');
+    //             setTimeout(() => pinInputRef.current?.focus(), 100);
+    //         }
+    //     }
+    // }, [pinInput, hasPin, authenticate]);
 
     const handleSetupSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -521,6 +521,8 @@ const PatientDashboard: React.FC = () => {
                                         inputMode="numeric"
                                         maxLength={4}
                                         autoFocus
+                                        autoComplete="off"
+                                        name="gina_pin_entry_field"
                                         className="w-48 text-center text-4xl tracking-[0.5em] p-3 border-b-2 border-indigo-300 focus:border-indigo-600 focus:outline-none bg-transparent text-slate-800 font-bold placeholder-slate-300"
                                         value={pinInput}
                                         onChange={(e) => handlePinChange(e.target.value)}
@@ -528,7 +530,10 @@ const PatientDashboard: React.FC = () => {
                                     />
                                 </div>
                                 {authError && <p className="text-red-500 text-sm font-medium animate-pulse">{authError}</p>}
-                                <p className="text-xs text-slate-400">Enter 4 digits to unlock automatically</p>
+                                <p className="text-xs text-slate-400">Enter 4 digits and press Unlock</p>
+                                <Button onClick={handleUnlock} fullWidth variant="primary" size="lg" className="mt-4">
+                                    Unlock
+                                </Button>
                                 <button
                                     onClick={handleForgotPin}
                                     className="text-xs text-indigo-400 hover:text-indigo-600 underline mt-2"
