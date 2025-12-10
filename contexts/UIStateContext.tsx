@@ -6,7 +6,7 @@ interface UIStateContextType {
   toggleAIPanel: () => void;
   openAIPanel: () => void;
   closeAIPanel: () => void;
-  
+
   isGoalsModalOpen: boolean;
   openGoalsModal: () => void;
   closeGoalsModal: () => void;
@@ -19,7 +19,7 @@ interface UIStateContextType {
   isPrintProfileModalOpen: boolean;
   openPrintProfileModal: () => void;
   closePrintProfileModal: () => void;
-  
+
   activePanel: 'management' | 'diagnosis' | 'severeAsthma' | null;
   openManagementPanel: () => void;
   openDiagnosisPanel: () => void;
@@ -30,7 +30,10 @@ interface UIStateContextType {
   isAuthenticated: boolean;
   authenticate: () => void;
   hasPin: boolean;
-  setAppPin: (pin: string) => void;
+  setAppPin: (pin: string, securityQuestion?: string, securityAnswer?: string) => void;
+  resetAppPin: () => void;
+  verifySecurityAnswer: (answer: string) => boolean;
+  getSecurityQuestion: () => string | null;
 }
 
 const UIStateContext = createContext<UIStateContextType | undefined>(undefined);
@@ -50,16 +53,37 @@ export const UIStateProvider: React.FC<{ children: ReactNode }> = ({ children })
   useEffect(() => {
     const storedPin = localStorage.getItem('gina_app_pin');
     if (storedPin) {
-        setHasPin(true);
+      setHasPin(true);
     }
   }, []);
 
   const authenticate = useCallback(() => setIsAuthenticated(true), []);
-  
-  const setAppPin = useCallback((pin: string) => {
-      localStorage.setItem('gina_app_pin', pin);
-      setHasPin(true);
-      setIsAuthenticated(true);
+
+  const setAppPin = useCallback((pin: string, securityQuestion?: string, securityAnswer?: string) => {
+    localStorage.setItem('gina_app_pin', pin);
+    if (securityQuestion && securityAnswer) {
+      localStorage.setItem('gina_app_security_question', securityQuestion);
+      localStorage.setItem('gina_app_security_answer', securityAnswer);
+    }
+    setHasPin(true);
+    setIsAuthenticated(true);
+  }, []);
+
+  const resetAppPin = useCallback(() => {
+    localStorage.removeItem('gina_app_pin');
+    localStorage.removeItem('gina_app_security_question');
+    localStorage.removeItem('gina_app_security_answer');
+    setHasPin(false);
+    setIsAuthenticated(false);
+  }, []);
+
+  const verifySecurityAnswer = useCallback((answer: string): boolean => {
+    const storedAnswer = localStorage.getItem('gina_app_security_answer');
+    return storedAnswer === answer;
+  }, []);
+
+  const getSecurityQuestion = useCallback((): string | null => {
+    return localStorage.getItem('gina_app_security_question');
   }, []);
 
 
@@ -90,13 +114,13 @@ export const UIStateProvider: React.FC<{ children: ReactNode }> = ({ children })
   const closeSidePanel = useCallback(() => setActivePanel(null), []);
 
   return (
-    <UIStateContext.Provider value={{ 
-      isAIPanelOpen, toggleAIPanel, openAIPanel, closeAIPanel, 
+    <UIStateContext.Provider value={{
+      isAIPanelOpen, toggleAIPanel, openAIPanel, closeAIPanel,
       isGoalsModalOpen, openGoalsModal, closeGoalsModal,
       isInfoModalOpen, infoModalContent, openInfoModal, closeInfoModal,
       isPrintProfileModalOpen, openPrintProfileModal, closePrintProfileModal,
       activePanel, openManagementPanel, openDiagnosisPanel, openSevereAsthmaPanel, closeSidePanel,
-      isAuthenticated, authenticate, hasPin, setAppPin
+      isAuthenticated, authenticate, hasPin, setAppPin, resetAppPin, verifySecurityAnswer, getSecurityQuestion
     }}>
       {children}
     </UIStateContext.Provider>

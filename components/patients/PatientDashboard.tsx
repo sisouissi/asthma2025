@@ -85,13 +85,19 @@ const PatientDashboard: React.FC = () => {
     const { patients, addPatient, deletePatient } = usePatientRecords();
     const { navigateTo } = useNavigation();
     const { patientData, updatePatientData, resetPatientData } = usePatientData();
-    const { isAuthenticated, authenticate, hasPin, setAppPin } = useUIState();
+    const { isAuthenticated, authenticate, hasPin, setAppPin, resetAppPin, verifySecurityAnswer, getSecurityQuestion } = useUIState();
 
     // PIN Authentication Local Input State
     const [pinInput, setPinInput] = useState('');
     const [confirmPinInput, setConfirmPinInput] = useState('');
     const [authError, setAuthError] = useState('');
     const pinInputRef = useRef<HTMLInputElement>(null);
+
+    // Security Question State
+    const [securityQuestion, setSecurityQuestion] = useState('');
+    const [securityAnswer, setSecurityAnswer] = useState('');
+    const [isResettingPin, setIsResettingPin] = useState(false);
+    const [resetAnswerInput, setResetAnswerInput] = useState('');
 
     // Views: List (Tabs), Create Form, Details
     const [view, setView] = useState<'list' | 'create' | 'details'>('list');
@@ -326,7 +332,45 @@ const PatientDashboard: React.FC = () => {
             setAuthError("PINs do not match.");
             return;
         }
-        setAppPin(pinInput);
+        if (!securityQuestion || !securityAnswer) {
+            setAuthError("Please set a security question and answer.");
+            return;
+        }
+        setAppPin(pinInput, securityQuestion, securityAnswer);
+        setAuthError('');
+    };
+
+    const handleForgotPin = () => {
+        const question = getSecurityQuestion();
+        if (question) {
+            setIsResettingPin(true);
+            setAuthError('');
+        } else {
+            // Fallback for legacy PINs without security question
+            if (window.confirm("No security question found. Resetting your PIN will allow you to create a new one. Are you sure?")) {
+                resetAppPin();
+                setPinInput('');
+                setAuthError('');
+            }
+        }
+    };
+
+    const handleResetSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (verifySecurityAnswer(resetAnswerInput)) {
+            resetAppPin();
+            setIsResettingPin(false);
+            setResetAnswerInput('');
+            setPinInput('');
+            setAuthError('');
+        } else {
+            setAuthError("Incorrect answer.");
+        }
+    };
+
+    const handleCancelReset = () => {
+        setIsResettingPin(false);
+        setResetAnswerInput('');
         setAuthError('');
     };
 
@@ -485,35 +529,62 @@ const PatientDashboard: React.FC = () => {
                                 </div>
                                 {authError && <p className="text-red-500 text-sm font-medium animate-pulse">{authError}</p>}
                                 <p className="text-xs text-slate-400">Enter 4 digits to unlock automatically</p>
+                                <button
+                                    onClick={handleForgotPin}
+                                    className="text-xs text-indigo-400 hover:text-indigo-600 underline mt-2"
+                                >
+                                    Forgot PIN?
+                                </button>
                             </div>
                         ) : (
                             <form onSubmit={handleSetupSubmit} className="space-y-6">
                                 <div className="bg-violet-50 p-3 rounded-lg text-sm text-violet-800 mb-4">
-                                    First-time access: Please create a secure 4-digit PIN.
+                                    First-time access: Create a secure 4-digit PIN and a security question.
                                 </div>
                                 <div className="space-y-4 text-left">
-                                    <div>
-                                        <label className="block text-xs font-semibold text-slate-500 uppercase mb-1 pl-1">Create PIN</label>
-                                        <input
-                                            type="password"
-                                            inputMode="numeric"
-                                            maxLength={4}
-                                            className="w-full text-center text-2xl tracking-widest p-3 bg-slate-100 border border-slate-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:bg-white transition-all"
-                                            value={pinInput}
-                                            onChange={(e) => handlePinChange(e.target.value)}
-                                            placeholder="••••"
-                                        />
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-xs font-semibold text-slate-500 uppercase mb-1 pl-1">Create PIN</label>
+                                            <input
+                                                type="password"
+                                                inputMode="numeric"
+                                                maxLength={4}
+                                                className="w-full text-center text-2xl tracking-widest p-3 bg-slate-100 border border-slate-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:bg-white transition-all"
+                                                value={pinInput}
+                                                onChange={(e) => handlePinChange(e.target.value)}
+                                                placeholder="••••"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-semibold text-slate-500 uppercase mb-1 pl-1">Confirm PIN</label>
+                                            <input
+                                                type="password"
+                                                inputMode="numeric"
+                                                maxLength={4}
+                                                className="w-full text-center text-2xl tracking-widest p-3 bg-slate-100 border border-slate-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:bg-white transition-all"
+                                                value={confirmPinInput}
+                                                onChange={(e) => handleConfirmChange(e.target.value)}
+                                                placeholder="••••"
+                                            />
+                                        </div>
                                     </div>
-                                    <div>
-                                        <label className="block text-xs font-semibold text-slate-500 uppercase mb-1 pl-1">Confirm PIN</label>
+
+                                    <div className="pt-2 border-t border-slate-200">
+                                        <label className="block text-xs font-semibold text-slate-500 uppercase mb-1 pl-1">Security Question</label>
                                         <input
-                                            type="password"
-                                            inputMode="numeric"
-                                            maxLength={4}
-                                            className="w-full text-center text-2xl tracking-widest p-3 bg-slate-100 border border-slate-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:bg-white transition-all"
-                                            value={confirmPinInput}
-                                            onChange={(e) => handleConfirmChange(e.target.value)}
-                                            placeholder="••••"
+                                            type="text"
+                                            className="w-full p-2 bg-slate-100 border border-slate-300 rounded-md text-sm focus:ring-2 focus:ring-violet-500 focus:bg-white transition-all mb-3"
+                                            value={securityQuestion}
+                                            onChange={(e) => setSecurityQuestion(e.target.value)}
+                                            placeholder="e.g., Name of your first pet?"
+                                        />
+                                        <label className="block text-xs font-semibold text-slate-500 uppercase mb-1 pl-1">Answer</label>
+                                        <input
+                                            type="text"
+                                            className="w-full p-2 bg-slate-100 border border-slate-300 rounded-md text-sm focus:ring-2 focus:ring-violet-500 focus:bg-white transition-all"
+                                            value={securityAnswer}
+                                            onChange={(e) => setSecurityAnswer(e.target.value)}
+                                            placeholder="Your answer..."
                                         />
                                     </div>
                                 </div>
@@ -525,151 +596,194 @@ const PatientDashboard: React.FC = () => {
                         )}
                     </div>
                 </Card>
+
+                {/* Forgot PIN Modal */}
+                {isResettingPin && (
+                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                        <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 animate-in fade-in zoom-in duration-200">
+                            <h3 className="text-lg font-bold text-slate-800 mb-2">Reset PIN</h3>
+                            <p className="text-slate-600 text-sm mb-4">Please answer your security question to reset your PIN.</p>
+
+                            <form onSubmit={handleResetSubmit}>
+                                <div className="mb-4">
+                                    <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Question</label>
+                                    <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg text-slate-700 font-medium text-sm">
+                                        {getSecurityQuestion()}
+                                    </div>
+                                </div>
+
+                                <div className="mb-6">
+                                    <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Answer</label>
+                                    <input
+                                        type="text"
+                                        autoFocus
+                                        className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                        value={resetAnswerInput}
+                                        onChange={(e) => setResetAnswerInput(e.target.value)}
+                                        placeholder="Enter your answer..."
+                                    />
+                                </div>
+
+                                {authError && <p className="text-red-500 text-sm font-medium mb-4">{authError}</p>}
+
+                                <div className="flex justify-end gap-3">
+                                    <Button type="button" variant="ghost" onClick={handleCancelReset}>Cancel</Button>
+                                    <Button type="submit" variant="primary">Verify & Reset</Button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                )}
             </div>
         );
     }
 
     // --- Render Main ---
     const renderMainList = () => (
-        <Card
-            title="Patient Directory"
-            icon={<Users className="text-indigo-600" />}
-            titleRightElement={
-                <Button onClick={() => setView('create')} size="sm" leftIcon={<PlusCircle size={16} />}>
-                    New Patient
-                </Button>
-            }
-        >
-            {/* Tabs */}
-            <div className="flex space-x-4 border-b border-slate-200 mb-6">
-                <button
-                    onClick={() => setActiveTab('all')}
-                    className={`pb-2 px-4 font-medium text-sm transition-colors relative ${activeTab === 'all'
-                        ? 'text-indigo-600'
-                        : 'text-slate-500 hover:text-slate-700'
-                        }`}
-                >
-                    All Patients
-                    {activeTab === 'all' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-indigo-600"></div>}
-                </button>
-                <button
-                    onClick={() => setActiveTab('today')}
-                    className={`pb-2 px-4 font-medium text-sm transition-colors relative flex items-center ${activeTab === 'today'
-                        ? 'text-indigo-600'
-                        : 'text-slate-500 hover:text-slate-700'
-                        }`}
-                >
-                    Appointments Today
-                    {todaysPatients.length > 0 && (
-                        <span className="ml-2 bg-red-100 text-red-600 text-xs font-bold px-2 py-0.5 rounded-full">
-                            {todaysPatients.length}
-                        </span>
-                    )}
-                    {activeTab === 'today' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-indigo-600"></div>}
-                </button>
+        <div className="space-y-6">
+            <div className="flex justify-end">
+                <BackupRestoreModule />
             </div>
+            <Card
+                title="Patient Directory"
+                icon={<Users className="text-indigo-600" />}
+                titleRightElement={
+                    <Button onClick={() => setView('create')} size="sm" leftIcon={<PlusCircle size={16} />}>
+                        New Patient
+                    </Button>
+                }
+            >
+                {/* Tabs */}
+                <div className="flex space-x-4 border-b border-slate-200 mb-6">
+                    <button
+                        onClick={() => setActiveTab('all')}
+                        className={`pb-2 px-4 font-medium text-sm transition-colors relative ${activeTab === 'all'
+                            ? 'text-indigo-600'
+                            : 'text-slate-500 hover:text-slate-700'
+                            }`}
+                    >
+                        All Patients
+                        {activeTab === 'all' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-indigo-600"></div>}
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('today')}
+                        className={`pb-2 px-4 font-medium text-sm transition-colors relative flex items-center ${activeTab === 'today'
+                            ? 'text-indigo-600'
+                            : 'text-slate-500 hover:text-slate-700'
+                            }`}
+                    >
+                        Appointments Today
+                        {todaysPatients.length > 0 && (
+                            <span className="ml-2 bg-red-100 text-red-600 text-xs font-bold px-2 py-0.5 rounded-full">
+                                {todaysPatients.length}
+                            </span>
+                        )}
+                        {activeTab === 'today' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-indigo-600"></div>}
+                    </button>
+                </div>
 
-            {/* Tab Content: ALL PATIENTS */}
-            {activeTab === 'all' && (
-                <>
-                    <div className="mb-6 relative">
-                        <input
-                            type="text"
-                            placeholder="Search by Name or File Number..."
-                            className={`pl-10 pr-4 py-3 rounded-lg ${inputStyle}`}
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
-                        <Search className="absolute left-3 top-3.5 text-slate-400" size={20} />
-                    </div>
-
-                    {paginatedPatients.length === 0 ? (
-                        <div className="text-center py-12 bg-slate-50 rounded-lg border border-dashed border-slate-300">
-                            <User className="mx-auto h-12 w-12 text-slate-300 mb-3" />
-                            <p className="text-slate-500 font-medium">No patients found matching your search.</p>
-                            {searchTerm && (
-                                <button onClick={() => setSearchTerm('')} className="text-indigo-600 text-sm mt-2 hover:underline">
-                                    Clear search
-                                </button>
-                            )}
+                {/* Tab Content: ALL PATIENTS */}
+                {activeTab === 'all' && (
+                    <>
+                        <div className="mb-6 relative">
+                            <input
+                                type="text"
+                                placeholder="Search by Name or File Number..."
+                                className={`pl-10 pr-4 py-3 rounded-lg ${inputStyle}`}
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                            <Search className="absolute left-3 top-3.5 text-slate-400" size={20} />
                         </div>
-                    ) : (
-                        <div className="space-y-3">
-                            {paginatedPatients.map(patient => (
-                                <PatientListItem
-                                    key={patient.id}
-                                    patient={patient}
-                                    onSelect={handleSelectPatient}
-                                    onDelete={handleDeletePatient}
-                                    onSummary={handleOpenSummary}
-                                    annualExacerbations={getAnnualExacerbations(patient)}
-                                    isDifficultToTreat={getPatientAlerts(patient)}
-                                />
-                            ))}
-                        </div>
-                    )}
 
-                    {/* Pagination Controls */}
-                    {filteredAllPatients.length > itemsPerPage && (
-                        <div className="flex justify-between items-center mt-6 pt-4 border-t border-slate-200">
-                            <div className="text-sm text-slate-500">
-                                Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, filteredAllPatients.length)} of {filteredAllPatients.length} patients
+                        {paginatedPatients.length === 0 ? (
+                            <div className="text-center py-12 bg-slate-50 rounded-lg border border-dashed border-slate-300">
+                                <User className="mx-auto h-12 w-12 text-slate-300 mb-3" />
+                                <p className="text-slate-500 font-medium">No patients found matching your search.</p>
+                                {searchTerm && (
+                                    <button onClick={() => setSearchTerm('')} className="text-indigo-600 text-sm mt-2 hover:underline">
+                                        Clear search
+                                    </button>
+                                )}
                             </div>
-                            <div className="flex gap-2">
-                                <Button
-                                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                                    disabled={currentPage === 1}
-                                    variant="secondary"
-                                    size="sm"
-                                    leftIcon={<ChevronLeft size={16} />}
-                                >
-                                    Previous
-                                </Button>
-                                <Button
-                                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                                    disabled={currentPage === totalPages}
-                                    variant="secondary"
-                                    size="sm"
-                                    rightIcon={<ChevronRight size={16} />}
-                                >
-                                    Next
-                                </Button>
+                        ) : (
+                            <div className="space-y-3">
+                                {paginatedPatients.map(patient => (
+                                    <PatientListItem
+                                        key={patient.id}
+                                        patient={patient}
+                                        onSelect={handleSelectPatient}
+                                        onDelete={handleDeletePatient}
+                                        onSummary={handleOpenSummary}
+                                        annualExacerbations={getAnnualExacerbations(patient)}
+                                        isDifficultToTreat={getPatientAlerts(patient)}
+                                    />
+                                ))}
                             </div>
-                        </div>
-                    )}
-                </>
-            )}
+                        )}
 
-            {/* Tab Content: APPOINTMENTS TODAY */}
-            {activeTab === 'today' && (
-                <>
-                    {todaysPatients.length === 0 ? (
-                        <div className="text-center py-12 bg-slate-50 rounded-lg border border-dashed border-slate-300">
-                            <Calendar className="mx-auto h-12 w-12 text-slate-300 mb-3" />
-                            <p className="text-slate-500 font-medium">No appointments scheduled for today.</p>
-                        </div>
-                    ) : (
-                        <div className="space-y-3">
-                            <div className="p-3 bg-blue-50 text-blue-800 text-sm rounded-md border border-blue-200 mb-4 flex items-center">
-                                <Bell size={16} className="mr-2" />
-                                Showing patients with a review scheduled for {new Date().toLocaleDateString()}.
+                        {/* Pagination Controls */}
+                        {filteredAllPatients.length > itemsPerPage && (
+                            <div className="flex justify-between items-center mt-6 pt-4 border-t border-slate-200">
+                                <div className="text-sm text-slate-500">
+                                    Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, filteredAllPatients.length)} of {filteredAllPatients.length} patients
+                                </div>
+                                <div className="flex gap-2">
+                                    <Button
+                                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                        disabled={currentPage === 1}
+                                        variant="secondary"
+                                        size="sm"
+                                        leftIcon={<ChevronLeft size={16} />}
+                                    >
+                                        Previous
+                                    </Button>
+                                    <Button
+                                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                        disabled={currentPage === totalPages}
+                                        variant="secondary"
+                                        size="sm"
+                                        rightIcon={<ChevronRight size={16} />}
+                                    >
+                                        Next
+                                    </Button>
+                                </div>
                             </div>
-                            {todaysPatients.map(patient => (
-                                <PatientListItem
-                                    key={patient.id}
-                                    patient={patient}
-                                    onSelect={handleSelectPatient}
-                                    onDelete={handleDeletePatient}
-                                    onSummary={handleOpenSummary}
-                                    annualExacerbations={getAnnualExacerbations(patient)}
-                                    isDifficultToTreat={getPatientAlerts(patient)}
-                                />
-                            ))}
-                        </div>
-                    )}
-                </>
-            )}
-        </Card>
+                        )}
+                    </>
+                )}
+
+                {/* Tab Content: APPOINTMENTS TODAY */}
+                {activeTab === 'today' && (
+                    <>
+                        {todaysPatients.length === 0 ? (
+                            <div className="text-center py-12 bg-slate-50 rounded-lg border border-dashed border-slate-300">
+                                <Calendar className="mx-auto h-12 w-12 text-slate-300 mb-3" />
+                                <p className="text-slate-500 font-medium">No appointments scheduled for today.</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-3">
+                                <div className="p-3 bg-blue-50 text-blue-800 text-sm rounded-md border border-blue-200 mb-4 flex items-center">
+                                    <Bell size={16} className="mr-2" />
+                                    Showing patients with a review scheduled for {new Date().toLocaleDateString()}.
+                                </div>
+                                {todaysPatients.map(patient => (
+                                    <PatientListItem
+                                        key={patient.id}
+                                        patient={patient}
+                                        onSelect={handleSelectPatient}
+                                        onDelete={handleDeletePatient}
+                                        onSummary={handleOpenSummary}
+                                        annualExacerbations={getAnnualExacerbations(patient)}
+                                        isDifficultToTreat={getPatientAlerts(patient)}
+                                    />
+                                ))}
+                            </div>
+                        )}
+                    </>
+                )}
+            </Card>
+        </div>
     );
 
     const renderCreate = () => (

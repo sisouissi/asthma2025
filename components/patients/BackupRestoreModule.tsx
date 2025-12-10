@@ -1,12 +1,12 @@
 import React, { useState, useRef } from 'react';
-import CryptoJS from 'crypto-js';
+import { encryptData, decryptData } from '../../services/encryptionService';
 import { usePatientRecords } from '../../contexts/PatientRecordsContext';
 import Button from '../ui/Button';
 import { Save, Upload, Lock, AlertTriangle, ShieldCheck, Download, FileJson } from '../../constants/icons';
 import Card from '../ui/Card';
 
 const BackupRestoreModule: React.FC = () => {
-    const { patients, importPatients } = usePatientRecords();
+    const { patients, restorePatients } = usePatientRecords();
     const [mode, setMode] = useState<'view' | 'backup' | 'restore'>('view');
     const [password, setPassword] = useState('');
     const [statusMsg, setStatusMsg] = useState<{ type: 'success' | 'error' | 'info', text: string } | null>(null);
@@ -19,7 +19,7 @@ const BackupRestoreModule: React.FC = () => {
         if (fileInputRef.current) fileInputRef.current.value = '';
     };
 
-    const handleBackup = (e: React.FormEvent) => {
+    const handleBackup = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
             if (!password || password.length < 4) {
@@ -27,15 +27,17 @@ const BackupRestoreModule: React.FC = () => {
                 return;
             }
 
-            const dataToSave = JSON.stringify(patients);
-            const encrypted = CryptoJS.AES.encrypt(dataToSave, password).toString();
+            setStatusMsg({ type: 'info', text: 'Encrypting data...' });
 
-            const blob = new Blob([encrypted], { type: 'application/json' });
+            // Use the new encryption service
+            const encryptedPackage = await encryptData(patients, password);
+
+            const blob = new Blob([encryptedPackage], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
             const date = new Date().toISOString().split('T')[0];
             link.href = url;
-            link.download = `gina_patients_backup_${date}.gina`;
+            link.download = `gina_patients_backup_${date}.json`; // Changed extension to .json
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
@@ -60,31 +62,28 @@ const BackupRestoreModule: React.FC = () => {
             return;
         }
 
+        setStatusMsg({ type: 'info', text: 'Decrypting and restoring...' });
+
         const reader = new FileReader();
-        reader.onload = (event) => {
+        reader.onload = async (event) => {
             try {
-                const updatedContent = event.target?.result as string;
-                if (!updatedContent) return;
+                const fileContent = event.target?.result as string;
+                if (!fileContent) return;
 
-                const bytes = CryptoJS.AES.decrypt(updatedContent, password);
-                const decryptedData = bytes.toString(CryptoJS.enc.Utf8);
+                // Use the new encryption service
+                const restoredData = await decryptData(fileContent, password);
 
-                if (!decryptedData) {
-                    throw new Error("Wrong password or corrupted file");
+                if (!Array.isArray(restoredData)) {
+                    throw new Error("Invalid data format: Expected an array of patients.");
                 }
 
-                const parsedData = JSON.parse(decryptedData);
-                if (!Array.isArray(parsedData)) {
-                    throw new Error("Invalid data format");
-                }
-
-                importPatients(parsedData);
+                restorePatients(restoredData);
                 setStatusMsg({ type: 'success', text: 'Patients restored successfully.' });
                 setTimeout(resetState, 2000);
 
             } catch (err) {
                 console.error(err);
-                setStatusMsg({ type: 'error', text: 'Restoration failed. Invalid password or file.' });
+                setStatusMsg({ type: 'error', text: 'Restoration failed. Incorrect password or corrupted file.' });
             }
         };
         reader.readAsText(file);
@@ -139,7 +138,7 @@ const BackupRestoreModule: React.FC = () => {
 
                 {statusMsg && (
                     <div className={`text-sm font-medium p-2 rounded ${statusMsg.type === 'error' ? 'text-red-600 bg-red-50' :
-                            statusMsg.type === 'success' ? 'text-emerald-600 bg-emerald-50' : 'text-slate-600'
+                        statusMsg.type === 'success' ? 'text-emerald-600 bg-emerald-50' : 'text-slate-600'
                         }`}>
                         {statusMsg.text}
                     </div>

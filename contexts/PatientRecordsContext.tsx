@@ -10,6 +10,7 @@ interface PatientRecordsContextType {
     updateConsultation: (patientId: string, consultationId: string, consultationData: PatientData) => void;
     getPatient: (id: string) => PatientProfile | undefined;
     importPatients: (patients: PatientProfile[]) => void;
+    restorePatients: (patients: PatientProfile[]) => void;
 }
 
 const PatientRecordsContext = createContext<PatientRecordsContextType | undefined>(undefined);
@@ -88,7 +89,7 @@ const DUMMY_PATIENTS: PatientProfile[] = [
                         }
                     ],
                     // Defaults
-                    acqHistory: [], cactHistory: [], child_currentGinaStep: null, child_initialAssessment: null, child_pathway: null, child_controlLevel: null, child_controlAssessmentAnswers: null, child_riskFactors: [], child_reviewReminderDate: null, youngChild_symptomPattern: null, youngChild_currentGinaStep: null, youngChild_currentTreatmentStrategy: null, youngChild_diagnosisCriteria: null, youngChild_controlLevel: null, youngChild_controlAssessmentAnswers: null, youngChild_riskFactors: [], youngChild_reviewReminderDate: null, exacerbationSeverity: 'severe', severeAsthma: { basicInfo: { age: '', diagnosis: 'unconfirmed', asthmaOnset: 'adult', exacerbationsLastYear: '', hospitalizationsLastYear: '', sabaUse: '' }, symptoms: { poorControl: false, frequentExacerbations: false, nightWaking: false, activityLimitation: false, frequentSabaUse: false, allergenDriven: false }, medications: { icsLaba: true, icsDose: 'high', ocs: false, maintenanceOcs: false, ocsDose: '', adherence: 'good', inhalerTechnique: 'correct', mart: false, lama: false, ltra: false, azithromycin: false, biologicsAvailable: null }, biomarkers: { bloodEosinophils: '', feNo: '', sputumEosinophils: '', totalIgE: '', specificIgE: false, skinPrickTest: false, fev1: '', fev1Predicted: '' }, comorbidities: [], riskFactors: [], investigations: { chestXray: false, hrct: false, allergyTesting: false, boneDensity: false, parasiteScreen: false, cardiacAssessment: false } }, severeAsthmaAssessment: { difficultToTreat: false, severeAsthma: false, type2Inflammation: false, eligibleForBiologics: false }
+                    acqHistory: [], cactHistory: [], child_currentGinaStep: null, child_initialAssessment: null, child_pathway: null, child_controlLevel: null, child_controlAssessmentAnswers: null, child_riskFactors: [], child_reviewReminderDate: null, youngChild_symptomPattern: null, youngChild_currentGinaStep: null, youngChild_currentTreatmentStrategy: null, youngChild_diagnosisCriteria: null, youngChild_controlLevel: null, youngChild_controlAssessmentAnswers: null, youngChild_riskFactors: [], youngChild_reviewReminderDate: null, exacerbationSeverity: 'severe', severeAsthma: { basicInfo: { age: '', diagnosis: 'unconfirmed', asthmaOnset: 'adult', exacerbationsLastYear: '', hospitalizationsLastYear: '', sabaUse: '' }, symptoms: { poorControl: false, frequentExacerbations: false, nightWaking: false, activityLimitation: false, frequentSabaUse: false, allergenDriven: false }, medications: { icsLaba: true, icsDose: 'high', ocs: false, maintenanceOcs: false, ocsDose: '', adherence: 'good', inhalerTechnique: 'correct', mart: false, lama: false, ltra: false, azithromycin: false, biologicsAvailable: null }, biomarkers: { bloodEosinophils: '', feNo: '', sputumEosinophils: '', totalIgE: '', specificIgE: false, skinPrickTest: false, fev1: '', fev1Predicted: '' }, comorbidities: [], riskFactors: [], investigations: { chestXray: false, hrct: false, allergyTesting: false, boneDensity: false, parasiteScreen: false, cardiacAssessment: false }, status: 'screening', optimizationPlan: undefined }, severeAsthmaAssessment: { difficultToTreat: false, severeAsthma: false, type2Inflammation: false, eligibleForBiologics: false }
                 }
             },
             {
@@ -420,8 +421,28 @@ export const PatientRecordsProvider: React.FC<{ children: ReactNode }> = ({ chil
         });
     }, []);
 
+    const restorePatients = useCallback((restoredPatients: PatientProfile[]) => {
+        setPatients(prev => {
+            const currentMap = new Map(prev.map(p => [p.id, p]));
+            let addedCount = 0;
+            let updatedCount = 0;
+
+            restoredPatients.forEach(p => {
+                if (currentMap.has(p.id)) {
+                    updatedCount++;
+                } else {
+                    addedCount++;
+                }
+                currentMap.set(p.id, p);
+            });
+
+            alert(`Restore complete.\nAdded: ${addedCount} patients\nUpdated: ${updatedCount} patients`);
+            return Array.from(currentMap.values());
+        });
+    }, []);
+
     return (
-        <PatientRecordsContext.Provider value={{ patients, addPatient, updatePatient, deletePatient, saveConsultation, updateConsultation, getPatient, importPatients }}>
+        <PatientRecordsContext.Provider value={{ patients, addPatient, updatePatient, deletePatient, saveConsultation, updateConsultation, getPatient, importPatients, restorePatients }}>
             {children}
         </PatientRecordsContext.Provider>
     );
